@@ -1,44 +1,29 @@
 package service;
 
-import model.Currency;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class CurrencyService {
-    private Map<String, Currency> currencies = new HashMap<>();
-    private String baseCurrency = "UAH";
+    private Map<String, Double> rates = new HashMap<>();
 
-    public void addCurrency(Currency currency) {
-        currencies.put(currency.getCode(), currency);
+    public CurrencyService() {
+        rates.put("USD", 38.3);
+        rates.put("EUR", 41.2);
+        rates.put("UAH", 1.0);
     }
 
-    public Currency getCurrency(String code) {
-        return currencies.get(code);
+    public Map<String, Double> getAllRates() {
+        return rates;
     }
 
-    public double convert(double amount, String fromCode, String toCode) {
-        Currency from = currencies.get(fromCode);
-        Currency to = currencies.get(toCode);
-        if (from != null && to != null) {
-            return from.convert(amount, to);
-        }
-        return amount;
+    public void updateRatesFromJson(Map<String, Double> newRates) {
+        rates.clear();
+        rates.putAll(newRates);
     }
 
-    public void setBaseCurrency(String baseCurrency) {
-        this.baseCurrency = baseCurrency;
-    }
-
-    public String getBaseCurrency() {
-        return baseCurrency;
-    }
-
-    public Map<String, Currency> getAllCurrencies() {
-        return currencies;
-    }
-
-    public void clear() {
-        currencies.clear();
+    public double convert(double amount, String from, String to) {
+        if (!rates.containsKey(from) || !rates.containsKey(to)) return amount;
+        double uahAmount = amount * rates.get(from);
+        return uahAmount / rates.get(to);
     }
 }
