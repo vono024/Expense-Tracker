@@ -1,32 +1,60 @@
 package model;
 
+import java.util.Objects;
+
 public class Currency {
     private String code;
-    private double rateToBase;
+    private String name;
+    private double rateToUAH;
 
-    public Currency(String code, double rateToBase) {
+    public Currency() {
+    }
+
+    public Currency(String code, String name, double rateToUAH) {
         this.code = code;
-        this.rateToBase = rateToBase;
+        this.name = name;
+        this.rateToUAH = rateToUAH;
     }
 
     public String getCode() {
         return code;
     }
 
-    public double getRateToBase() {
-        return rateToBase;
+    public String getName() {
+        return name;
+    }
+
+    public double getRateToUAH() {
+        return rateToUAH;
     }
 
     public void setCode(String code) {
         this.code = code;
     }
 
-    public void setRateToBase(double rateToBase) {
-        this.rateToBase = rateToBase;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public double convert(double amount, Currency targetCurrency) {
-        double amountInBase = amount * rateToBase;
-        return amountInBase / targetCurrency.getRateToBase();
+    public void setRateToUAH(double rateToUAH) {
+        this.rateToUAH = rateToUAH;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Currency)) return false;
+        Currency currency = (Currency) o;
+        return code.equalsIgnoreCase(currency.code);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(code.toUpperCase());
+    }
+
+    @Override
+    public String toString() {
+        return code + " (" + name + ")";
     }
 }

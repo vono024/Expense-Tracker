@@ -6,38 +6,58 @@ import service.TransactionService;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.Map;
 
 public class StatsDialog extends JDialog {
-    private JTextArea statsArea;
+    private final JTextArea output;
 
-    public StatsDialog(JFrame parent, TransactionService service) {
+    public StatsDialog(JFrame parent, TransactionService transactionService) {
         super(parent, "Статистика", true);
-        setSize(500, 400);
+        setSize(600, 500);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
 
-        statsArea = new JTextArea();
-        statsArea.setEditable(false);
-        statsArea.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        add(new JScrollPane(statsArea), BorderLayout.CENTER);
+        output = new JTextArea();
+        output.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        output.setEditable(false);
+        add(new JScrollPane(output), BorderLayout.CENTER);
 
+        generateReport(transactionService);
+    }
+
+    private void generateReport(TransactionService transactionService) {
         ReportService reportService = new ReportService();
-        java.util.List<Transaction> list = service.getAllTransactions();
+        List<Transaction> all = transactionService.getAllTransactions();
 
-        double income = reportService.getTotalByType(list, "income");
-        double expense = reportService.getTotalByType(list, "expense");
-        Map<String, Double> byCategory = reportService.getTotalByCategory(list, "expense");
+        double totalIncome = reportService.getTotalByType(all, "income");
+        double totalExpense = reportService.getTotalByType(all, "expense");
+        double balance = reportService.getBalance(all);
+        double avgIncome = reportService.getAverageTransaction(all, "income");
+        double avgExpense = reportService.getAverageTransaction(all, "expense");
+
+        Map<String, Double> categorySums = reportService.getGroupedCategoryTotals(all, "expense");
+        List<Transaction> topExpenses = reportService.getTopTransactions(all, "expense", 3);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("📊 Загальний дохід: ").append(income).append("\n");
-        sb.append("📉 Загальні витрати: ").append(expense).append("\n\n");
-        sb.append("🧾 Витрати по категоріях:\n");
+        sb.append("📊 Загальний дохід: ").append(totalIncome).append(" грн\n");
+        sb.append("📉 Загальні витрати: ").append(totalExpense).append(" грн\n");
+        sb.append("💰 Баланс: ").append(balance).append(" грн\n\n");
 
-        for (Map.Entry<String, Double> entry : byCategory.entrySet()) {
-            sb.append(" - ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+        sb.append("📈 Середній дохід: ").append(avgIncome).append(" грн\n");
+        sb.append("📉 Середня витрата: ").append(avgExpense).append(" грн\n\n");
+
+        sb.append("🧾 Витрати по категоріях:\n");
+        for (Map.Entry<String, Double> entry : categorySums.entrySet()) {
+            sb.append(" - ").append(entry.getKey()).append(": ").append(entry.getValue()).append(" грн\n");
         }
 
-        statsArea.setText(sb.toString());
+        sb.append("\n🔥 Топ витрат:\n");
+        for (Transaction t : topExpenses) {
+            sb.append(" - ").append(t.getDate()).append(" — ")
+                    .append(t.getAmount()).append(" грн (").append(t.getCategory()).append(" — ").append(t.getDescription()).append(")\n");
+        }
+
+        output.setText(sb.toString());
     }
 }

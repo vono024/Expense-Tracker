@@ -1,11 +1,11 @@
 package service;
 
-import model.Transaction;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import model.Transaction;
+
 import java.io.*;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 
 public class FileService {
@@ -25,42 +25,35 @@ public class FileService {
     }
 
     public void saveAsCsv(List<Transaction> transactions, String path) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(path))) {
+            writer.println("amount,category,date,description,currency,type");
             for (Transaction t : transactions) {
-                writer.write(t.getAmount() + "," + t.getCategory() + "," + t.getDate() + "," +
-                        t.getDescription() + "," + t.getCurrency() + "," + t.getType());
-                writer.newLine();
+                writer.printf("%s,%s,%s,%s,%s,%s%n",
+                        t.getAmount(),
+                        escape(t.getCategory()),
+                        t.getDate(),
+                        escape(t.getDescription()),
+                        t.getCurrency(),
+                        t.getType());
             }
         }
-    }
-
-    public List<Transaction> loadFromCsv(String path) throws IOException {
-        List<Transaction> transactions = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                Transaction t = new Transaction(
-                        Double.parseDouble(parts[0]),
-                        parts[1],
-                        java.time.LocalDate.parse(parts[2]),
-                        parts[3],
-                        parts[4],
-                        parts[5]
-                );
-                transactions.add(t);
-            }
-        }
-        return transactions;
     }
 
     public void saveAsTxt(List<Transaction> transactions, String path) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(path))) {
             for (Transaction t : transactions) {
-                writer.write(t.getType() + " | " + t.getDate() + " | " + t.getAmount() + " " +
-                        t.getCurrency() + " | " + t.getCategory() + " | " + t.getDescription());
-                writer.newLine();
+                writer.println("Сума: " + t.getAmount());
+                writer.println("Категорія: " + t.getCategory());
+                writer.println("Дата: " + t.getDate());
+                writer.println("Опис: " + t.getDescription());
+                writer.println("Валюта: " + t.getCurrency());
+                writer.println("Тип: " + t.getType());
+                writer.println("------------------------------");
             }
         }
+    }
+
+    private String escape(String text) {
+        return text == null ? "" : text.replace(",", " ");
     }
 }

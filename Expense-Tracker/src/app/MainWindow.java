@@ -1,12 +1,10 @@
 package app;
 
 import controller.AddTransactionDialog;
+import controller.CategoryManagerDialog;
 import controller.StatsDialog;
 import model.Transaction;
-import service.CurrencyService;
-import service.FileService;
-import service.ReportService;
-import service.TransactionService;
+import service.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -16,142 +14,180 @@ import java.util.List;
 import java.util.Map;
 
 public class MainWindow extends JFrame {
-    private JTable transactionTable;
+    private JTable table;
     private JLabel incomeLabel, expenseLabel, balanceLabel, limitLabel;
     private JTextField limitField;
     private JTextArea currencyArea;
 
-    private TransactionService transactionService = new TransactionService();
-    private ReportService reportService = new ReportService();
-    private CurrencyService currencyService = new CurrencyService();
-    private FileService fileService = new FileService();
-
-    private double monthlyLimit = 0;
+    private final TransactionService transactionService = new TransactionService();
+    private final ReportService reportService = new ReportService();
+    private final FileService fileService = new FileService();
+    private final CurrencyService currencyService = new CurrencyService();
+    private final BudgetService budgetService = new BudgetService();
+    private final CategoryService categoryService = new CategoryService();
 
     public MainWindow() {
-        setTitle("Фінансовий Трекер");
-        setSize(1000, 700);
+        setTitle("Фінансовий трекер");
+        setSize(1100, 700);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        UIManager.put("Label.font", new Font("Segoe UI", Font.PLAIN, 14));
-        UIManager.put("Button.font", new Font("Segoe UI", Font.PLAIN, 14));
-        UIManager.put("Table.font", new Font("Segoe UI", Font.PLAIN, 13));
-        UIManager.put("TableHeader.font", new Font("Segoe UI", Font.BOLD, 13));
+        try {
+            categoryService.loadFromJson("resources/categories.json");
+            if (categoryService.getAllCategories().isEmpty()) {
+                initDefaultCategories();
+                categoryService.saveToJson("resources/categories.json");
+            }
+        } catch (Exception e) {
+            initDefaultCategories();
+            try {
+                categoryService.saveToJson("resources/categories.json");
+            } catch (IOException ignored) {}
+        }
 
         JPanel topPanel = new JPanel();
-        JButton addButton = new JButton("Додати");
-        JButton statsButton = new JButton("Статистика");
-        JButton refreshButton = new JButton("Оновити");
-        JButton saveButton = new JButton("Зберегти");
-        JButton loadButton = new JButton("Завантажити");
+
+        JButton addBtn = new JButton("Додати");
+        JButton statsBtn = new JButton("Статистика");
+        JButton saveJson = new JButton("Зберегти JSON");
+        JButton saveCsv = new JButton("Зберегти CSV");
+        JButton saveTxt = new JButton("Зберегти TXT");
+        JButton loadBtn = new JButton("Завантажити");
+        JButton updateBtn = new JButton("Оновити");
+        JButton categoryBtn = new JButton("Категорії");
 
         limitField = new JTextField(6);
-        JButton setLimitButton = new JButton("Встановити ліміт");
+        JButton limitBtn = new JButton("Ліміт");
 
-        topPanel.add(addButton);
-        topPanel.add(statsButton);
-        topPanel.add(refreshButton);
-        topPanel.add(saveButton);
-        topPanel.add(loadButton);
+        topPanel.add(addBtn);
+        topPanel.add(statsBtn);
+        topPanel.add(saveJson);
+        topPanel.add(saveCsv);
+        topPanel.add(saveTxt);
+        topPanel.add(loadBtn);
+        topPanel.add(updateBtn);
+        topPanel.add(categoryBtn);
         topPanel.add(new JLabel("Ліміт:"));
         topPanel.add(limitField);
-        topPanel.add(setLimitButton);
+        topPanel.add(limitBtn);
 
-        transactionTable = new JTable();
-        JScrollPane scrollPane = new JScrollPane(transactionTable);
+        table = new JTable();
+        JScrollPane scrollPane = new JScrollPane(table);
 
         JPanel bottomPanel = new JPanel(new GridLayout(2, 1));
-
-        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel summary = new JPanel(new FlowLayout(FlowLayout.LEFT));
         incomeLabel = new JLabel();
         expenseLabel = new JLabel();
         balanceLabel = new JLabel();
         limitLabel = new JLabel();
-        summaryPanel.add(incomeLabel);
-        summaryPanel.add(expenseLabel);
-        summaryPanel.add(balanceLabel);
-        summaryPanel.add(limitLabel);
 
-        JPanel currencyPanel = new JPanel(new BorderLayout());
+        summary.add(incomeLabel);
+        summary.add(expenseLabel);
+        summary.add(balanceLabel);
+        summary.add(limitLabel);
+
         currencyArea = new JTextArea(4, 30);
         currencyArea.setEditable(false);
+        JScrollPane currencyScroll = new JScrollPane(currencyArea);
+        JPanel currencyPanel = new JPanel(new BorderLayout());
         currencyPanel.setBorder(BorderFactory.createTitledBorder("Курси валют"));
-        currencyPanel.add(new JScrollPane(currencyArea), BorderLayout.CENTER);
+        currencyPanel.add(currencyScroll, BorderLayout.CENTER);
 
-        bottomPanel.add(summaryPanel);
+        bottomPanel.add(summary);
         bottomPanel.add(currencyPanel);
 
         add(topPanel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        addButton.addActionListener(e -> {
-            AddTransactionDialog dialog = new AddTransactionDialog(this, transactionService);
+        addBtn.addActionListener(e -> {
+            AddTransactionDialog dialog = new AddTransactionDialog(this, transactionService, categoryService, currencyService);
             dialog.setVisible(true);
             updateTable();
         });
 
-        statsButton.addActionListener(e -> {
+        statsBtn.addActionListener(e -> {
             StatsDialog dialog = new StatsDialog(this, transactionService);
             dialog.setVisible(true);
         });
 
-        refreshButton.addActionListener(e -> updateTable());
+        updateBtn.addActionListener(e -> updateTable());
 
-        setLimitButton.addActionListener(e -> {
+        saveJson.addActionListener(e -> {
             try {
-                monthlyLimit = Double.parseDouble(limitField.getText());
-                updateSummary();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Невірне значення ліміту.");
-            }
-        });
-
-        saveButton.addActionListener(e -> {
-            try {
-                fileService.saveAsJson(transactionService.getAllTransactions(), "transactions.json");
+                fileService.saveAsJson(transactionService.getAllTransactions(), "resources/transactions.json");
             } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this, "Помилка при збереженні.");
+                JOptionPane.showMessageDialog(this, "Помилка при збереженні JSON.");
             }
         });
 
-        loadButton.addActionListener(e -> {
+        saveCsv.addActionListener(e -> {
             try {
-                List<Transaction> loaded = fileService.loadFromJson("transactions.json");
+                fileService.saveAsCsv(transactionService.getAllTransactions(), "resources/transactions.csv");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Помилка при збереженні CSV.");
+            }
+        });
+
+        saveTxt.addActionListener(e -> {
+            try {
+                fileService.saveAsTxt(transactionService.getAllTransactions(), "resources/transactions.txt");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Помилка при збереженні TXT.");
+            }
+        });
+
+        loadBtn.addActionListener(e -> {
+            try {
+                List<Transaction> list = fileService.loadFromJson("resources/transactions.json");
                 transactionService.clearTransactions();
-                loaded.forEach(transactionService::addTransaction);
+                list.forEach(transactionService::addTransaction);
                 updateTable();
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this, "Помилка при завантаженні.");
             }
         });
 
-        JPopupMenu popup = new JPopupMenu();
-        JMenuItem editItem = new JMenuItem("Редагувати");
-        JMenuItem deleteItem = new JMenuItem("Видалити");
-        popup.add(editItem);
-        popup.add(deleteItem);
-        transactionTable.setComponentPopupMenu(popup);
+        limitBtn.addActionListener(e -> {
+            try {
+                double val = Double.parseDouble(limitField.getText());
+                budgetService.setMonthlyLimit(val);
+                updateSummary();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Некоректне число");
+            }
+        });
 
-        editItem.addActionListener(e -> {
-            int row = transactionTable.getSelectedRow();
+        categoryBtn.addActionListener(e -> {
+            CategoryManagerDialog dialog = new CategoryManagerDialog(this, categoryService);
+            dialog.setVisible(true);
+        });
+
+        JPopupMenu popup = new JPopupMenu();
+        JMenuItem edit = new JMenuItem("Редагувати");
+        JMenuItem delete = new JMenuItem("Видалити");
+        popup.add(edit);
+        popup.add(delete);
+        table.setComponentPopupMenu(popup);
+
+        edit.addActionListener(e -> {
+            int row = table.getSelectedRow();
             if (row != -1) {
-                Transaction selected = transactionService.getAllTransactions().get(row);
-                AddTransactionDialog dialog = new AddTransactionDialog(this, transactionService, selected);
+                Transaction t = transactionService.getAllTransactions().get(row);
+                AddTransactionDialog dialog = new AddTransactionDialog(this, transactionService, t, categoryService, currencyService);
                 dialog.setVisible(true);
                 updateTable();
             }
         });
 
-        deleteItem.addActionListener(e -> {
-            int row = transactionTable.getSelectedRow();
+        delete.addActionListener(e -> {
+            int row = table.getSelectedRow();
             if (row != -1) {
-                Transaction selected = transactionService.getAllTransactions().get(row);
-                int confirm = JOptionPane.showConfirmDialog(this, "Видалити обрану транзакцію?", "Підтвердження", JOptionPane.YES_NO_OPTION);
+                Transaction t = transactionService.getAllTransactions().get(row);
+                int confirm = JOptionPane.showConfirmDialog(this, "Видалити транзакцію?", "Підтвердження", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
-                    transactionService.removeTransaction(selected);
+                    transactionService.removeTransaction(t);
                     updateTable();
                 }
             }
@@ -160,10 +196,10 @@ public class MainWindow extends JFrame {
         updateTable();
     }
 
-    public void updateTable() {
+    private void updateTable() {
         List<Transaction> list = transactionService.getAllTransactions();
-        String[] columns = {"Сума", "Категорія", "Дата", "Опис", "Валюта", "Тип"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0);
+        String[] cols = {"Сума", "Категорія", "Дата", "Опис", "Валюта", "Тип"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0);
         for (Transaction t : list) {
             model.addRow(new Object[]{
                     t.getAmount(),
@@ -174,7 +210,7 @@ public class MainWindow extends JFrame {
                     t.getType()
             });
         }
-        transactionTable.setModel(model);
+        table.setModel(model);
         updateSummary();
         updateCurrency();
     }
@@ -184,20 +220,31 @@ public class MainWindow extends JFrame {
         double income = reportService.getTotalByType(list, "income");
         double expense = reportService.getTotalByType(list, "expense");
         double balance = income - expense;
+        double limit = budgetService.getMonthlyLimit();
+        boolean exceeded = budgetService.isLimitExceeded(expense);
 
         incomeLabel.setText(" Дохід: " + income + " грн ");
         expenseLabel.setText(" Витрати: " + expense + " грн ");
         balanceLabel.setText(" Баланс: " + balance + " грн ");
-        limitLabel.setText(" Ліміт: " + monthlyLimit + " грн " +
-                (expense > monthlyLimit ? "(Перевищено!)" : ""));
+        limitLabel.setText(" Ліміт: " + limit + " грн " + (exceeded ? "(перевищено!)" : ""));
     }
 
     private void updateCurrency() {
-        Map<String, Double> map = currencyService.getAllRates();
+        Map<String, Double> rates = currencyService.getAllRates();
         StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, Double> entry : map.entrySet()) {
+        for (Map.Entry<String, Double> entry : rates.entrySet()) {
             sb.append(entry.getKey()).append(" → UAH: ").append(entry.getValue()).append("\n");
         }
         currencyArea.setText(sb.toString());
+    }
+
+    private void initDefaultCategories() {
+        categoryService.addCategory(new model.Category("Зарплата", "income", "💰"));
+        categoryService.addCategory(new model.Category("Фріланс", "income", "🧑‍💻"));
+        categoryService.addCategory(new model.Category("Подарунки", "income", "🎁"));
+        categoryService.addCategory(new model.Category("Їжа", "expense", "🍔"));
+        categoryService.addCategory(new model.Category("Транспорт", "expense", "🚗"));
+        categoryService.addCategory(new model.Category("Розваги", "expense", "🎮"));
+        categoryService.addCategory(new model.Category("Медицина", "expense", "💊"));
     }
 }

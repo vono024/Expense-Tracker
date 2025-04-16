@@ -1,35 +1,51 @@
 package model;
 
+import java.time.YearMonth;
+import java.util.Objects;
+
 public class Budget {
-    private double monthlyLimit;
-    private double currentSpending;
+    private YearMonth month;
+    private double limit;
 
-    public Budget(double monthlyLimit) {
-        this.monthlyLimit = monthlyLimit;
-        this.currentSpending = 0.0;
+    public Budget() {
     }
 
-    public double getMonthlyLimit() {
-        return monthlyLimit;
+    public Budget(YearMonth month, double limit) {
+        this.month = month;
+        this.limit = limit;
     }
 
-    public double getCurrentSpending() {
-        return currentSpending;
+    public YearMonth getMonth() {
+        return month;
     }
 
-    public void setMonthlyLimit(double monthlyLimit) {
-        this.monthlyLimit = monthlyLimit;
+    public double getLimit() {
+        return limit;
     }
 
-    public void addSpending(double amount) {
-        this.currentSpending += amount;
+    public void setMonth(YearMonth month) {
+        this.month = month;
     }
 
-    public void resetSpending() {
-        this.currentSpending = 0.0;
+    public void setLimit(double limit) {
+        this.limit = limit;
     }
 
-    public boolean isLimitExceeded() {
-        return currentSpending > monthlyLimit;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Budget)) return false;
+        Budget budget = (Budget) o;
+        return Objects.equals(month, budget.month);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(month);
+    }
+
+    @Override
+    public String toString() {
+        return "Ліміт на " + month + ": " + limit + " грн";
     }
 }

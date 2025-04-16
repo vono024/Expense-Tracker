@@ -1,77 +1,105 @@
 package controller;
 
+import model.Category;
 import model.Transaction;
+import service.CategoryService;
+import service.CurrencyService;
 import service.TransactionService;
 
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class AddTransactionDialog extends JDialog {
-    private JTextField amountField;
-    private JTextField descriptionField;
-    private JComboBox<String> categoryBox;
-    private JComboBox<String> currencyBox;
-    private JComboBox<String> typeBox;
-    private JButton saveButton;
+    private final JTextField amountField = new JTextField();
+    private final JTextField descriptionField = new JTextField();
+    private final JComboBox<String> typeBox = new JComboBox<>(new String[]{"income", "expense"});
+    private final JComboBox<String> currencyBox = new JComboBox<>(new String[]{"UAH", "USD", "EUR"});
+    private final JComboBox<String> categoryBox = new JComboBox<>();
+    private final JButton saveButton = new JButton();
 
-    private TransactionService transactionService;
-    private Transaction existing;
+    private final TransactionService transactionService;
+    private final Transaction existingTransaction;
+    private final CategoryService categoryService;
+    private final CurrencyService currencyService;
 
-    public AddTransactionDialog(JFrame parent, TransactionService service) {
-        this(parent, service, null);
+    public AddTransactionDialog(JFrame parent, TransactionService transactionService, CategoryService categoryService, CurrencyService currencyService) {
+        this(parent, transactionService, null, categoryService, currencyService);
     }
 
-    public AddTransactionDialog(JFrame parent, TransactionService service, Transaction existingTransaction) {
-        super(parent, existingTransaction == null ? "Додати транзакцію" : "Редагувати транзакцію", true);
-        this.transactionService = service;
-        this.existing = existingTransaction;
+    public AddTransactionDialog(JFrame parent, TransactionService transactionService, Transaction existing, CategoryService categoryService, CurrencyService currencyService) {
+        super(parent, existing == null ? "Додати транзакцію" : "Редагувати транзакцію", true);
+        this.transactionService = transactionService;
+        this.existingTransaction = existing;
+        this.categoryService = categoryService;
+        this.currencyService = currencyService;
 
         setSize(400, 300);
-        setLayout(new GridLayout(7, 2));
         setLocationRelativeTo(parent);
+        setLayout(new GridLayout(7, 2));
 
-        amountField = new JTextField();
-        descriptionField = new JTextField();
-        categoryBox = new JComboBox<>(new String[]{"Їжа", "Транспорт", "Розваги", "Інше"});
-        currencyBox = new JComboBox<>(new String[]{"UAH", "USD", "EUR"});
-        typeBox = new JComboBox<>(new String[]{"income", "expense"});
-        saveButton = new JButton(existing == null ? "Зберегти" : "Оновити");
+        refreshCategories();
 
-        if (existing != null) {
-            amountField.setText(String.valueOf(existing.getAmount()));
-            descriptionField.setText(existing.getDescription());
-            categoryBox.setSelectedItem(existing.getCategory());
-            currencyBox.setSelectedItem(existing.getCurrency());
-            typeBox.setSelectedItem(existing.getType());
+        if (existingTransaction != null) {
+            amountField.setText(String.valueOf(existingTransaction.getAmount()));
+            descriptionField.setText(existingTransaction.getDescription());
+            typeBox.setSelectedItem(existingTransaction.getType());
+            currencyBox.setSelectedItem(existingTransaction.getCurrency());
+            categoryBox.setSelectedItem(existingTransaction.getCategory());
+            saveButton.setText("Оновити");
+        } else {
+            saveButton.setText("Зберегти");
         }
 
-        add(new JLabel("Сума:")); add(amountField);
-        add(new JLabel("Опис:")); add(descriptionField);
-        add(new JLabel("Категорія:")); add(categoryBox);
-        add(new JLabel("Валюта:")); add(currencyBox);
-        add(new JLabel("Тип:")); add(typeBox);
-        add(new JLabel()); add(saveButton);
+        typeBox.addActionListener(e -> refreshCategories());
+
+        add(new JLabel("Сума:"));
+        add(amountField);
+        add(new JLabel("Опис:"));
+        add(descriptionField);
+        add(new JLabel("Тип:"));
+        add(typeBox);
+        add(new JLabel("Категорія:"));
+        add(categoryBox);
+        add(new JLabel("Валюта:"));
+        add(currencyBox);
+        add(new JLabel(""));
+        add(saveButton);
 
         saveButton.addActionListener(e -> {
             try {
                 double amount = Double.parseDouble(amountField.getText());
-                String description = descriptionField.getText();
+                String desc = descriptionField.getText();
+                String type = (String) typeBox.getSelectedItem();
                 String category = (String) categoryBox.getSelectedItem();
                 String currency = (String) currencyBox.getSelectedItem();
-                String type = (String) typeBox.getSelectedItem();
                 LocalDate date = LocalDate.now();
 
-                Transaction transaction = new Transaction(amount, category, date, description, currency, type);
+                Transaction t = new Transaction(amount, category, date, desc, currency, type);
 
-                if (existing != null) {
-                    service.removeTransaction(existing);
+                if (existingTransaction != null) {
+                    transactionService.updateTransaction(existingTransaction, t);
+                } else {
+                    transactionService.addTransaction(t);
                 }
-                service.addTransaction(transaction);
                 dispose();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Невірні дані");
+                JOptionPane.showMessageDialog(this, "Помилка введення.");
             }
         });
+    }
+
+    private void refreshCategories() {
+        categoryBox.removeAllItems();
+        String type = (String) typeBox.getSelectedItem();
+        List<Category> filtered = categoryService.getAllCategories()
+                .stream()
+                .filter(c -> c.getType().equalsIgnoreCase(type))
+                .collect(Collectors.toList());
+        for (Category c : filtered) {
+            categoryBox.addItem(c.getName());
+        }
     }
 }
