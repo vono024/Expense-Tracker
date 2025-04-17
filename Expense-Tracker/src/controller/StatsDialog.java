@@ -3,6 +3,10 @@ package controller;
 import model.Transaction;
 import service.ReportService;
 import service.TransactionService;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.data.general.DefaultPieDataset;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,16 +18,36 @@ public class StatsDialog extends JDialog {
 
     public StatsDialog(JFrame parent, TransactionService transactionService) {
         super(parent, "Статистика", true);
-        setSize(600, 500);
+        setSize(800, 600);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
 
         output = new JTextArea();
         output.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         output.setEditable(false);
-        add(new JScrollPane(output), BorderLayout.CENTER);
 
         generateReport(transactionService);
+
+        JScrollPane textScroll = new JScrollPane(output);
+
+        Map<String, Double> categorySums = new ReportService().getGroupedCategoryTotals(transactionService.getAllTransactions(), "expense");
+        DefaultPieDataset dataset = new DefaultPieDataset();
+        categorySums.forEach(dataset::setValue);
+
+        JFreeChart pieChart = ChartFactory.createPieChart(
+                "Витрати по категоріях",
+                dataset,
+                true,
+                true,
+                false
+        );
+
+        ChartPanel chartPanel = new ChartPanel(pieChart);
+        chartPanel.setPreferredSize(new Dimension(600, 300));
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, textScroll, chartPanel);
+        splitPane.setResizeWeight(0.5);
+        add(splitPane, BorderLayout.CENTER);
     }
 
     private void generateReport(TransactionService transactionService) {

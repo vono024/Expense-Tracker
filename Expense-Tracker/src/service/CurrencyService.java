@@ -1,5 +1,13 @@
 package service;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,6 +60,35 @@ public class CurrencyService {
     public void removeCurrency(String code) {
         if (!"UAH".equalsIgnoreCase(code)) {
             rates.remove(code);
+        }
+    }
+
+    public void fetchRatesFromInternet() {
+        try {
+            URL url = new URL("https://api.exchangerate.host/latest?base=UAH");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = in.readLine()) != null) {
+                response.append(line);
+            }
+            in.close();
+
+            Gson gson = new Gson();
+            JsonObject obj = gson.fromJson(response.toString(), JsonObject.class);
+            JsonObject ratesJson = obj.getAsJsonObject("rates");
+
+            Map<String, Double> updatedRates = new HashMap<>();
+            for (Map.Entry<String, JsonElement> entry : ratesJson.entrySet()) {
+                updatedRates.put(entry.getKey(), entry.getValue().getAsDouble());
+            }
+
+            updateRatesFromJson(updatedRates);
+        } catch (Exception e) {
+            System.err.println("Помилка при оновленні курсів валют: " + e.getMessage());
         }
     }
 }

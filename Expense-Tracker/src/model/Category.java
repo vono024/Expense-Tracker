@@ -7,9 +7,6 @@ public class Category {
     private String type;
     private String icon;
 
-    public Category() {
-    }
-
     public Category(String name, String type, String icon) {
         this.name = name;
         this.type = type;

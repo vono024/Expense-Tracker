@@ -1,17 +1,17 @@
 package app;
 
 import controller.AddTransactionDialog;
-import controller.CategoryManagerDialog;
 import controller.StatsDialog;
 import model.Transaction;
+import model.Category;
 import service.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.io.IOException;
 
 public class MainWindow extends JFrame {
     private JTable table;
@@ -33,18 +33,7 @@ public class MainWindow extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        try {
-            categoryService.loadFromJson("resources/categories.json");
-            if (categoryService.getAllCategories().isEmpty()) {
-                initDefaultCategories();
-                categoryService.saveToJson("resources/categories.json");
-            }
-        } catch (Exception e) {
-            initDefaultCategories();
-            try {
-                categoryService.saveToJson("resources/categories.json");
-            } catch (IOException ignored) {}
-        }
+        initDefaultCategories();
 
         JPanel topPanel = new JPanel();
 
@@ -55,7 +44,7 @@ public class MainWindow extends JFrame {
         JButton saveTxt = new JButton("Зберегти TXT");
         JButton loadBtn = new JButton("Завантажити");
         JButton updateBtn = new JButton("Оновити");
-        JButton categoryBtn = new JButton("Категорії");
+        JButton refreshRatesBtn = new JButton("Оновити курси");
 
         limitField = new JTextField(6);
         JButton limitBtn = new JButton("Ліміт");
@@ -67,7 +56,7 @@ public class MainWindow extends JFrame {
         topPanel.add(saveTxt);
         topPanel.add(loadBtn);
         topPanel.add(updateBtn);
-        topPanel.add(categoryBtn);
+        topPanel.add(refreshRatesBtn);
         topPanel.add(new JLabel("Ліміт:"));
         topPanel.add(limitField);
         topPanel.add(limitBtn);
@@ -144,7 +133,7 @@ public class MainWindow extends JFrame {
                 transactionService.clearTransactions();
                 list.forEach(transactionService::addTransaction);
                 updateTable();
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Помилка при завантаженні.");
             }
         });
@@ -159,9 +148,10 @@ public class MainWindow extends JFrame {
             }
         });
 
-        categoryBtn.addActionListener(e -> {
-            CategoryManagerDialog dialog = new CategoryManagerDialog(this, categoryService);
-            dialog.setVisible(true);
+        refreshRatesBtn.addActionListener(e -> {
+            currencyService.fetchRatesFromInternet();
+            updateCurrency();
+            JOptionPane.showMessageDialog(this, "Курси валют оновлено з інтернету.");
         });
 
         JPopupMenu popup = new JPopupMenu();
@@ -239,12 +229,12 @@ public class MainWindow extends JFrame {
     }
 
     private void initDefaultCategories() {
-        categoryService.addCategory(new model.Category("Зарплата", "income", "💰"));
-        categoryService.addCategory(new model.Category("Фріланс", "income", "🧑‍💻"));
-        categoryService.addCategory(new model.Category("Подарунки", "income", "🎁"));
-        categoryService.addCategory(new model.Category("Їжа", "expense", "🍔"));
-        categoryService.addCategory(new model.Category("Транспорт", "expense", "🚗"));
-        categoryService.addCategory(new model.Category("Розваги", "expense", "🎮"));
-        categoryService.addCategory(new model.Category("Медицина", "expense", "💊"));
+        categoryService.addCategory(new Category("Зарплата", "income", "💰"));
+        categoryService.addCategory(new Category("Фріланс", "income", "🧑‍💻"));
+        categoryService.addCategory(new Category("Подарунок", "income", "🎁"));
+        categoryService.addCategory(new Category("Їжа", "expense", "🍔"));
+        categoryService.addCategory(new Category("Транспорт", "expense", "🚗"));
+        categoryService.addCategory(new Category("Розваги", "expense", "🎮"));
+        categoryService.addCategory(new Category("Медицина", "expense", "💊"));
     }
 }
