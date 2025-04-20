@@ -4,50 +4,48 @@ import controller.AddTransactionDialog;
 import controller.StatsDialog;
 import model.Transaction;
 import model.Category;
-import service.*;
+import service.TransactionService;
+import service.ReportService;
+import service.FileService;
+import service.CurrencyService;
+import service.BudgetService;
+import service.CategoryService;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.util.List;
-import java.util.Map;
-import java.io.IOException;
+public class MainWindow extends javax.swing.JFrame {
 
-public class MainWindow extends JFrame {
-    private JTable table;
-    private JLabel incomeLabel, expenseLabel, balanceLabel, limitLabel;
-    private JTextField limitField;
-    private JTextArea currencyArea;
+    private javax.swing.JTable table;
+    private javax.swing.JLabel incomeLabel, expenseLabel, balanceLabel, limitLabel;
+    private javax.swing.JTextField limitField;
+    private javax.swing.JTextArea currencyArea;
 
-    private final TransactionService transactionService = new TransactionService();
-    private final ReportService reportService = new ReportService();
-    private final FileService fileService = new FileService();
-    private final CurrencyService currencyService = new CurrencyService();
-    private final BudgetService budgetService = new BudgetService();
-    private final CategoryService categoryService = new CategoryService();
+    private final service.TransactionService transactionService = new service.TransactionService();
+    private final service.ReportService reportService = new service.ReportService();
+    private final service.FileService fileService = new service.FileService();
+    private final service.CurrencyService currencyService = new service.CurrencyService();
+    private final service.BudgetService budgetService = new service.BudgetService();
+    private final service.CategoryService categoryService = new service.CategoryService();
 
     public MainWindow() {
         setTitle("Фінансовий трекер");
         setSize(1100, 700);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout());
+        setLayout(new java.awt.BorderLayout());
 
         initDefaultCategories();
 
-        JPanel topPanel = new JPanel();
+        javax.swing.JPanel topPanel = new javax.swing.JPanel();
 
-        JButton addBtn = new JButton("Додати");
-        JButton statsBtn = new JButton("Статистика");
-        JButton saveJson = new JButton("Зберегти JSON");
-        JButton saveCsv = new JButton("Зберегти CSV");
-        JButton saveTxt = new JButton("Зберегти TXT");
-        JButton loadBtn = new JButton("Завантажити");
-        JButton updateBtn = new JButton("Оновити");
-        JButton refreshRatesBtn = new JButton("Оновити курси");
+        javax.swing.JButton addBtn = new javax.swing.JButton("Додати");
+        javax.swing.JButton statsBtn = new javax.swing.JButton("Статистика");
+        javax.swing.JButton saveJson = new javax.swing.JButton("Зберегти JSON");
+        javax.swing.JButton saveCsv = new javax.swing.JButton("Зберегти CSV");
+        javax.swing.JButton saveTxt = new javax.swing.JButton("Зберегти TXT");
+        javax.swing.JButton loadBtn = new javax.swing.JButton("Завантажити");
+        javax.swing.JButton updateBtn = new javax.swing.JButton("Оновити");
 
-        limitField = new JTextField(6);
-        JButton limitBtn = new JButton("Ліміт");
+        limitField = new javax.swing.JTextField(6);
+        javax.swing.JButton limitBtn = new javax.swing.JButton("Ліміт");
 
         topPanel.add(addBtn);
         topPanel.add(statsBtn);
@@ -56,48 +54,47 @@ public class MainWindow extends JFrame {
         topPanel.add(saveTxt);
         topPanel.add(loadBtn);
         topPanel.add(updateBtn);
-        topPanel.add(refreshRatesBtn);
-        topPanel.add(new JLabel("Ліміт:"));
+        topPanel.add(new javax.swing.JLabel("Ліміт:"));
         topPanel.add(limitField);
         topPanel.add(limitBtn);
 
-        table = new JTable();
-        JScrollPane scrollPane = new JScrollPane(table);
+        table = new javax.swing.JTable();
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(table);
 
-        JPanel bottomPanel = new JPanel(new GridLayout(2, 1));
-        JPanel summary = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        incomeLabel = new JLabel();
-        expenseLabel = new JLabel();
-        balanceLabel = new JLabel();
-        limitLabel = new JLabel();
+        javax.swing.JPanel bottomPanel = new javax.swing.JPanel(new java.awt.GridLayout(2, 1));
+        javax.swing.JPanel summary = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+        incomeLabel = new javax.swing.JLabel();
+        expenseLabel = new javax.swing.JLabel();
+        balanceLabel = new javax.swing.JLabel();
+        limitLabel = new javax.swing.JLabel();
 
         summary.add(incomeLabel);
         summary.add(expenseLabel);
         summary.add(balanceLabel);
         summary.add(limitLabel);
 
-        currencyArea = new JTextArea(4, 30);
+        currencyArea = new javax.swing.JTextArea(4, 30);
         currencyArea.setEditable(false);
-        JScrollPane currencyScroll = new JScrollPane(currencyArea);
-        JPanel currencyPanel = new JPanel(new BorderLayout());
-        currencyPanel.setBorder(BorderFactory.createTitledBorder("Курси валют"));
-        currencyPanel.add(currencyScroll, BorderLayout.CENTER);
+        javax.swing.JScrollPane currencyScroll = new javax.swing.JScrollPane(currencyArea);
+        javax.swing.JPanel currencyPanel = new javax.swing.JPanel(new java.awt.BorderLayout());
+        currencyPanel.setBorder(javax.swing.BorderFactory.createTitledBorder("Курси валют"));
+        currencyPanel.add(currencyScroll, java.awt.BorderLayout.CENTER);
 
         bottomPanel.add(summary);
         bottomPanel.add(currencyPanel);
 
-        add(topPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
+        add(topPanel, java.awt.BorderLayout.NORTH);
+        add(scrollPane, java.awt.BorderLayout.CENTER);
+        add(bottomPanel, java.awt.BorderLayout.SOUTH);
 
         addBtn.addActionListener(e -> {
-            AddTransactionDialog dialog = new AddTransactionDialog(this, transactionService, categoryService, currencyService);
+            controller.AddTransactionDialog dialog = new controller.AddTransactionDialog(this, transactionService, categoryService, currencyService);
             dialog.setVisible(true);
             updateTable();
         });
 
         statsBtn.addActionListener(e -> {
-            StatsDialog dialog = new StatsDialog(this, transactionService);
+            controller.StatsDialog dialog = new controller.StatsDialog(this, transactionService);
             dialog.setVisible(true);
         });
 
@@ -106,57 +103,51 @@ public class MainWindow extends JFrame {
         saveJson.addActionListener(e -> {
             try {
                 fileService.saveAsJson(transactionService.getAllTransactions(), "resources/transactions.json");
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this, "Помилка при збереженні JSON.");
+            } catch (java.io.IOException ex) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Помилка при збереженні JSON.");
             }
         });
 
         saveCsv.addActionListener(e -> {
             try {
                 fileService.saveAsCsv(transactionService.getAllTransactions(), "resources/transactions.csv");
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this, "Помилка при збереженні CSV.");
+            } catch (java.io.IOException ex) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Помилка при збереженні CSV.");
             }
         });
 
         saveTxt.addActionListener(e -> {
             try {
                 fileService.saveAsTxt(transactionService.getAllTransactions(), "resources/transactions.txt");
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this, "Помилка при збереженні TXT.");
+            } catch (java.io.IOException ex) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Помилка при збереженні TXT.");
             }
         });
 
         loadBtn.addActionListener(e -> {
             try {
-                List<Transaction> list = fileService.loadFromJson("resources/transactions.json");
+                java.util.List<model.Transaction> list = fileService.loadFromJson("resources/transactions.json");
                 transactionService.clearTransactions();
                 list.forEach(transactionService::addTransaction);
                 updateTable();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Помилка при завантаженні.");
+            } catch (java.io.IOException ex) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Помилка при завантаженні.");
             }
         });
 
         limitBtn.addActionListener(e -> {
             try {
-                double val = Double.parseDouble(limitField.getText());
+                double val = java.lang.Double.parseDouble(limitField.getText());
                 budgetService.setMonthlyLimit(val);
                 updateSummary();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Некоректне число");
+            } catch (java.lang.Exception ex) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Некоректне число");
             }
         });
 
-        refreshRatesBtn.addActionListener(e -> {
-            currencyService.fetchRatesFromInternet();
-            updateCurrency();
-            JOptionPane.showMessageDialog(this, "Курси валют оновлено з інтернету.");
-        });
-
-        JPopupMenu popup = new JPopupMenu();
-        JMenuItem edit = new JMenuItem("Редагувати");
-        JMenuItem delete = new JMenuItem("Видалити");
+        javax.swing.JPopupMenu popup = new javax.swing.JPopupMenu();
+        javax.swing.JMenuItem edit = new javax.swing.JMenuItem("Редагувати");
+        javax.swing.JMenuItem delete = new javax.swing.JMenuItem("Видалити");
         popup.add(edit);
         popup.add(delete);
         table.setComponentPopupMenu(popup);
@@ -164,8 +155,8 @@ public class MainWindow extends JFrame {
         edit.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row != -1) {
-                Transaction t = transactionService.getAllTransactions().get(row);
-                AddTransactionDialog dialog = new AddTransactionDialog(this, transactionService, t, categoryService, currencyService);
+                model.Transaction t = transactionService.getAllTransactions().get(row);
+                controller.AddTransactionDialog dialog = new controller.AddTransactionDialog(this, transactionService, t, categoryService, currencyService);
                 dialog.setVisible(true);
                 updateTable();
             }
@@ -174,9 +165,9 @@ public class MainWindow extends JFrame {
         delete.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row != -1) {
-                Transaction t = transactionService.getAllTransactions().get(row);
-                int confirm = JOptionPane.showConfirmDialog(this, "Видалити транзакцію?", "Підтвердження", JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
+                model.Transaction t = transactionService.getAllTransactions().get(row);
+                int confirm = javax.swing.JOptionPane.showConfirmDialog(this, "Видалити транзакцію?", "Підтвердження", javax.swing.JOptionPane.YES_NO_OPTION);
+                if (confirm == javax.swing.JOptionPane.YES_OPTION) {
                     transactionService.removeTransaction(t);
                     updateTable();
                 }
@@ -184,14 +175,21 @@ public class MainWindow extends JFrame {
         });
 
         updateTable();
+
+        new javax.swing.Timer(15000, e -> {
+            currencyService.fetchRatesFromInternet();
+            updateCurrency();
+            System.out.println("💱 Курси валют автоматично оновлено: " + java.time.LocalTime.now());
+            System.out.println("💲 Поточні: \n" + currencyArea.getText());
+        }).start();
     }
 
     private void updateTable() {
-        List<Transaction> list = transactionService.getAllTransactions();
-        String[] cols = {"Сума", "Категорія", "Дата", "Опис", "Валюта", "Тип"};
-        DefaultTableModel model = new DefaultTableModel(cols, 0);
-        for (Transaction t : list) {
-            model.addRow(new Object[]{
+        java.util.List<model.Transaction> list = transactionService.getAllTransactions();
+        java.lang.String[] cols = {"Сума", "Категорія", "Дата", "Опис", "Валюта", "Тип"};
+        javax.swing.table.DefaultTableModel model = new javax.swing.table.DefaultTableModel(cols, 0);
+        for (model.Transaction t : list) {
+            model.addRow(new java.lang.Object[]{
                     t.getAmount(),
                     t.getCategory(),
                     t.getDate(),
@@ -206,7 +204,7 @@ public class MainWindow extends JFrame {
     }
 
     private void updateSummary() {
-        List<Transaction> list = transactionService.getAllTransactions();
+        java.util.List<model.Transaction> list = transactionService.getAllTransactions();
         double income = reportService.getTotalByType(list, "income");
         double expense = reportService.getTotalByType(list, "expense");
         double balance = income - expense;
@@ -220,21 +218,29 @@ public class MainWindow extends JFrame {
     }
 
     private void updateCurrency() {
-        Map<String, Double> rates = currencyService.getAllRates();
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, Double> entry : rates.entrySet()) {
-            sb.append(entry.getKey()).append(" → UAH: ").append(entry.getValue()).append("\n");
-        }
+        java.util.Map<java.lang.String, java.lang.Double> rates = currencyService.getAllRates();
+        java.lang.StringBuilder sb = new java.lang.StringBuilder();
+
+        double uah = rates.getOrDefault("UAH", 1.0);
+        double eur = rates.getOrDefault("EUR", 1.0);
+        double usd = rates.getOrDefault("USD", 1.0);
+
+        double eurToUah = uah / eur;
+        double usdToUah = uah / usd;
+
+        sb.append("1 EUR → ").append(String.format("%.2f", eurToUah)).append(" UAH\n");
+        sb.append("1 USD → ").append(String.format("%.2f", usdToUah)).append(" UAH\n");
+
         currencyArea.setText(sb.toString());
     }
 
     private void initDefaultCategories() {
-        categoryService.addCategory(new Category("Зарплата", "income", "💰"));
-        categoryService.addCategory(new Category("Фріланс", "income", "🧑‍💻"));
-        categoryService.addCategory(new Category("Подарунок", "income", "🎁"));
-        categoryService.addCategory(new Category("Їжа", "expense", "🍔"));
-        categoryService.addCategory(new Category("Транспорт", "expense", "🚗"));
-        categoryService.addCategory(new Category("Розваги", "expense", "🎮"));
-        categoryService.addCategory(new Category("Медицина", "expense", "💊"));
+        categoryService.addCategory(new model.Category("Зарплата", "income", "💰"));
+        categoryService.addCategory(new model.Category("Фріланс", "income", "🧑‍💻"));
+        categoryService.addCategory(new model.Category("Подарунок", "income", "🎁"));
+        categoryService.addCategory(new model.Category("Їжа", "expense", "🍔"));
+        categoryService.addCategory(new model.Category("Транспорт", "expense", "🚗"));
+        categoryService.addCategory(new model.Category("Розваги", "expense", "🎮"));
+        categoryService.addCategory(new model.Category("Медицина", "expense", "💊"));
     }
 }

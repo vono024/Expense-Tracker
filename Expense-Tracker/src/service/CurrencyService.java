@@ -12,22 +12,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CurrencyService {
-    private final Map<String, Double> rates = new HashMap<>();
+
+    private final java.util.Map<java.lang.String, java.lang.Double> rates = new java.util.HashMap<>();
 
     public CurrencyService() {
         rates.put("UAH", 1.0);
-        rates.put("USD", 38.0);
-        rates.put("EUR", 41.0);
+        fetchRatesFromInternet();
     }
 
-    public Map<String, Double> getAllRates() {
-        return new HashMap<>(rates);
+    public java.util.Map<java.lang.String, java.lang.Double> getAllRates() {
+        return new java.util.HashMap<>(rates);
     }
 
-    public void updateRatesFromJson(Map<String, Double> newRates) {
+    public void updateRatesFromJson(java.util.Map<java.lang.String, java.lang.Double> newRates) {
         if (newRates != null && !newRates.isEmpty()) {
             rates.clear();
-            for (Map.Entry<String, Double> entry : newRates.entrySet()) {
+            rates.put("UAH", 1.0);
+            for (java.util.Map.Entry<java.lang.String, java.lang.Double> entry : newRates.entrySet()) {
                 if (entry.getValue() > 0) {
                     rates.put(entry.getKey(), entry.getValue());
                 }
@@ -35,7 +36,7 @@ public class CurrencyService {
         }
     }
 
-    public double convert(double amount, String fromCurrency, String toCurrency) {
+    public double convert(double amount, java.lang.String fromCurrency, java.lang.String toCurrency) {
         if (!rates.containsKey(fromCurrency) || !rates.containsKey(toCurrency)) {
             return amount;
         }
@@ -43,21 +44,21 @@ public class CurrencyService {
         return baseAmount / rates.get(toCurrency);
     }
 
-    public boolean isSupported(String currencyCode) {
+    public boolean isSupported(java.lang.String currencyCode) {
         return rates.containsKey(currencyCode);
     }
 
-    public double getRate(String currencyCode) {
+    public double getRate(java.lang.String currencyCode) {
         return rates.getOrDefault(currencyCode, 1.0);
     }
 
-    public void addOrUpdateCurrency(String code, double rate) {
+    public void addOrUpdateCurrency(java.lang.String code, double rate) {
         if (code != null && !code.isEmpty() && rate > 0) {
             rates.put(code, rate);
         }
     }
 
-    public void removeCurrency(String code) {
+    public void removeCurrency(java.lang.String code) {
         if (!"UAH".equalsIgnoreCase(code)) {
             rates.remove(code);
         }
@@ -65,30 +66,44 @@ public class CurrencyService {
 
     public void fetchRatesFromInternet() {
         try {
-            URL url = new URL("https://api.exchangerate.host/latest?base=UAH");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            java.net.URL url = new java.net.URL("https://open.er-api.com/v6/latest/USD");
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            StringBuilder response = new StringBuilder();
-            String line;
+            java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+            java.lang.StringBuilder response = new java.lang.StringBuilder();
+            java.lang.String line;
             while ((line = in.readLine()) != null) {
                 response.append(line);
             }
             in.close();
 
-            Gson gson = new Gson();
-            JsonObject obj = gson.fromJson(response.toString(), JsonObject.class);
-            JsonObject ratesJson = obj.getAsJsonObject("rates");
+            com.google.gson.Gson gson = new com.google.gson.Gson();
+            com.google.gson.JsonObject obj = gson.fromJson(response.toString(), com.google.gson.JsonObject.class);
 
-            Map<String, Double> updatedRates = new HashMap<>();
-            for (Map.Entry<String, JsonElement> entry : ratesJson.entrySet()) {
-                updatedRates.put(entry.getKey(), entry.getValue().getAsDouble());
+            if (obj == null || !obj.has("rates")) {
+                System.err.println("❗ API не повернув поле 'rates'. Повна відповідь: " + obj);
+                return;
+            }
+
+            com.google.gson.JsonObject ratesJson = obj.getAsJsonObject("rates");
+
+            java.util.Map<java.lang.String, java.lang.Double> updatedRates = new java.util.HashMap<>();
+            updatedRates.put("USD", 1.0); // базова
+            if (ratesJson.has("UAH")) {
+                updatedRates.put("UAH", ratesJson.get("UAH").getAsDouble());
+            }
+            if (ratesJson.has("EUR")) {
+                updatedRates.put("EUR", ratesJson.get("EUR").getAsDouble());
             }
 
             updateRatesFromJson(updatedRates);
-        } catch (Exception e) {
-            System.err.println("Помилка при оновленні курсів валют: " + e.getMessage());
+
+            System.out.println("✅ Курси оновлено (USD-базово): " + updatedRates);
+
+        } catch (java.lang.Exception e) {
+            System.err.println("❌ Помилка при оновленні курсів валют:");
+            e.printStackTrace();
         }
     }
 }
