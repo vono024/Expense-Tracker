@@ -42,7 +42,6 @@ public class MainWindow extends javax.swing.JFrame {
         javax.swing.JButton saveCsv = new javax.swing.JButton("Зберегти CSV");
         javax.swing.JButton saveTxt = new javax.swing.JButton("Зберегти TXT");
         javax.swing.JButton loadBtn = new javax.swing.JButton("Завантажити");
-        javax.swing.JButton updateBtn = new javax.swing.JButton("Оновити");
 
         limitField = new javax.swing.JTextField(6);
         javax.swing.JButton limitBtn = new javax.swing.JButton("Ліміт");
@@ -53,7 +52,6 @@ public class MainWindow extends javax.swing.JFrame {
         topPanel.add(saveCsv);
         topPanel.add(saveTxt);
         topPanel.add(loadBtn);
-        topPanel.add(updateBtn);
         topPanel.add(new javax.swing.JLabel("Ліміт:"));
         topPanel.add(limitField);
         topPanel.add(limitBtn);
@@ -98,11 +96,10 @@ public class MainWindow extends javax.swing.JFrame {
             dialog.setVisible(true);
         });
 
-        updateBtn.addActionListener(e -> updateTable());
-
         saveJson.addActionListener(e -> {
             try {
                 fileService.saveAsJson(transactionService.getAllTransactions(), "resources/transactions.json");
+                updateTable();
             } catch (java.io.IOException ex) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Помилка при збереженні JSON.");
             }
@@ -111,6 +108,7 @@ public class MainWindow extends javax.swing.JFrame {
         saveCsv.addActionListener(e -> {
             try {
                 fileService.saveAsCsv(transactionService.getAllTransactions(), "resources/transactions.csv");
+                updateTable();
             } catch (java.io.IOException ex) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Помилка при збереженні CSV.");
             }
@@ -119,6 +117,7 @@ public class MainWindow extends javax.swing.JFrame {
         saveTxt.addActionListener(e -> {
             try {
                 fileService.saveAsTxt(transactionService.getAllTransactions(), "resources/transactions.txt");
+                updateTable();
             } catch (java.io.IOException ex) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Помилка при збереженні TXT.");
             }
@@ -139,7 +138,7 @@ public class MainWindow extends javax.swing.JFrame {
             try {
                 double val = java.lang.Double.parseDouble(limitField.getText());
                 budgetService.setMonthlyLimit(val);
-                updateSummary();
+                updateTable();
             } catch (java.lang.Exception ex) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Некоректне число");
             }
@@ -179,8 +178,6 @@ public class MainWindow extends javax.swing.JFrame {
         new javax.swing.Timer(15000, e -> {
             currencyService.fetchRatesFromInternet();
             updateCurrency();
-            System.out.println("💱 Курси валют автоматично оновлено: " + java.time.LocalTime.now());
-            System.out.println("💲 Поточні: \n" + currencyArea.getText());
         }).start();
     }
 
@@ -218,18 +215,14 @@ public class MainWindow extends javax.swing.JFrame {
     }
 
     private void updateCurrency() {
-        java.util.Map<java.lang.String, java.lang.Double> rates = currencyService.getAllRates();
-        java.lang.StringBuilder sb = new java.lang.StringBuilder();
+        java.util.Map<String, Double> rates = currencyService.getAllRates();
+        StringBuilder sb = new StringBuilder();
 
-        double uah = rates.getOrDefault("UAH", 1.0);
-        double eur = rates.getOrDefault("EUR", 1.0);
         double usd = rates.getOrDefault("USD", 1.0);
+        double eur = rates.getOrDefault("EUR", 1.0);
 
-        double eurToUah = uah / eur;
-        double usdToUah = uah / usd;
-
-        sb.append("1 EUR → ").append(String.format("%.2f", eurToUah)).append(" UAH\n");
-        sb.append("1 USD → ").append(String.format("%.2f", usdToUah)).append(" UAH\n");
+        sb.append("1 EUR → ").append(String.format("%.2f", eur)).append(" UAH\n");
+        sb.append("1 USD → ").append(String.format("%.2f", usd)).append(" UAH\n");
 
         currencyArea.setText(sb.toString());
     }
