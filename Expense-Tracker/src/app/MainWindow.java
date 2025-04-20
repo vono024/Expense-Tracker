@@ -12,8 +12,8 @@ import service.BudgetService;
 import service.CategoryService;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import java.io.IOException;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +36,7 @@ public class MainWindow extends JFrame {
         setSize(1100, 700);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new java.awt.BorderLayout());
+        setLayout(new BorderLayout());
 
         initDefaultCategories();
 
@@ -44,24 +44,15 @@ public class MainWindow extends JFrame {
 
         JButton addBtn = new JButton("Додати");
         JButton statsBtn = new JButton("Статистика");
-        JButton exportBtn = new JButton("Зберегти як");
-
-        JPopupMenu exportMenu = new JPopupMenu();
-        JMenuItem saveJson = new JMenuItem("JSON");
-        JMenuItem saveCsv = new JMenuItem("CSV");
-        JMenuItem saveTxt = new JMenuItem("TXT");
-        exportMenu.add(saveJson);
-        exportMenu.add(saveCsv);
-        exportMenu.add(saveTxt);
-        exportBtn.addActionListener(e -> exportMenu.show(exportBtn, 0, exportBtn.getHeight()));
-
+        JButton saveBtn = new JButton("Зберегти як");
         JButton loadBtn = new JButton("Завантажити");
+
         limitField = new JTextField(6);
         JButton limitBtn = new JButton("Ліміт");
 
         topPanel.add(addBtn);
         topPanel.add(statsBtn);
-        topPanel.add(exportBtn);
+        topPanel.add(saveBtn);
         topPanel.add(loadBtn);
         topPanel.add(new JLabel("Ліміт:"));
         topPanel.add(limitField);
@@ -70,12 +61,13 @@ public class MainWindow extends JFrame {
         table = new JTable();
         JScrollPane scrollPane = new JScrollPane(table);
 
-        JPanel bottomPanel = new JPanel(new java.awt.GridLayout(2, 1));
-        JPanel summary = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+        JPanel bottomPanel = new JPanel(new GridLayout(2, 1));
+        JPanel summary = new JPanel(new FlowLayout(FlowLayout.LEFT));
         incomeLabel = new JLabel();
         expenseLabel = new JLabel();
         balanceLabel = new JLabel();
         limitLabel = new JLabel();
+
         summary.add(incomeLabel);
         summary.add(expenseLabel);
         summary.add(balanceLabel);
@@ -84,16 +76,16 @@ public class MainWindow extends JFrame {
         currencyArea = new JTextArea(4, 30);
         currencyArea.setEditable(false);
         JScrollPane currencyScroll = new JScrollPane(currencyArea);
-        JPanel currencyPanel = new JPanel(new java.awt.BorderLayout());
+        JPanel currencyPanel = new JPanel(new BorderLayout());
         currencyPanel.setBorder(BorderFactory.createTitledBorder("Курси валют"));
-        currencyPanel.add(currencyScroll, java.awt.BorderLayout.CENTER);
+        currencyPanel.add(currencyScroll, BorderLayout.CENTER);
 
         bottomPanel.add(summary);
         bottomPanel.add(currencyPanel);
 
-        add(topPanel, java.awt.BorderLayout.NORTH);
-        add(scrollPane, java.awt.BorderLayout.CENTER);
-        add(bottomPanel, java.awt.BorderLayout.SOUTH);
+        add(topPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
 
         addBtn.addActionListener(e -> {
             AddTransactionDialog dialog = new AddTransactionDialog(this, transactionService, categoryService, currencyService);
@@ -106,58 +98,31 @@ public class MainWindow extends JFrame {
             dialog.setVisible(true);
         });
 
-        saveJson.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Зберегти як JSON");
-            chooser.setFileFilter(new FileNameExtensionFilter("JSON файли (*.json)", "json"));
-            int result = chooser.showSaveDialog(this);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                try {
-                    String path = chooser.getSelectedFile().getAbsolutePath();
-                    if (!path.toLowerCase().endsWith(".json")) path += ".json";
-                    fileService.saveAsJson(transactionService.getAllTransactions(), path);
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(this, "Помилка при збереженні JSON.");
-                }
-            }
-        });
-
-        saveCsv.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Зберегти як CSV");
-            chooser.setFileFilter(new FileNameExtensionFilter("CSV файли (*.csv)", "csv"));
-            int result = chooser.showSaveDialog(this);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                try {
-                    String path = chooser.getSelectedFile().getAbsolutePath();
-                    if (!path.toLowerCase().endsWith(".csv")) path += ".csv";
-                    fileService.saveAsCsv(transactionService.getAllTransactions(), path);
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(this, "Помилка при збереженні CSV.");
-                }
-            }
-        });
-
-        saveTxt.addActionListener(e -> {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Зберегти як TXT");
-            chooser.setFileFilter(new FileNameExtensionFilter("Текстові файли (*.txt)", "txt"));
-            int result = chooser.showSaveDialog(this);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                try {
-                    String path = chooser.getSelectedFile().getAbsolutePath();
-                    if (!path.toLowerCase().endsWith(".txt")) path += ".txt";
-                    fileService.saveAsTxt(transactionService.getAllTransactions(), path);
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(this, "Помилка при збереженні TXT.");
+        saveBtn.addActionListener(e -> {
+            String[] formats = {"JSON", "CSV", "TXT"};
+            String selected = (String) JOptionPane.showInputDialog(this, "Формат:", "Зберегти як", JOptionPane.PLAIN_MESSAGE, null, formats, formats[0]);
+            if (selected != null) {
+                JFileChooser chooser = new JFileChooser();
+                chooser.setDialogTitle("Зберегти як " + selected);
+                int result = chooser.showSaveDialog(this);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        String path = chooser.getSelectedFile().getAbsolutePath();
+                        switch (selected) {
+                            case "JSON" -> fileService.saveAsJson(transactionService.getAllTransactions(), path);
+                            case "CSV" -> fileService.saveAsCsv(transactionService.getAllTransactions(), path);
+                            case "TXT" -> fileService.saveAsTxt(transactionService.getAllTransactions(), path);
+                        }
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Помилка при збереженні.");
+                    }
                 }
             }
         });
 
         loadBtn.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Виберіть JSON файл для завантаження");
-            chooser.setFileFilter(new FileNameExtensionFilter("JSON файли (*.json)", "json"));
+            chooser.setDialogTitle("Завантажити JSON");
             int result = chooser.showOpenDialog(this);
             if (result == JFileChooser.APPROVE_OPTION) {
                 try {
@@ -165,8 +130,8 @@ public class MainWindow extends JFrame {
                     transactionService.clearTransactions();
                     list.forEach(transactionService::addTransaction);
                     updateTable();
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(this, "Помилка при завантаженні файлу.");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Помилка при завантаженні.");
                 }
             }
         });
@@ -221,10 +186,10 @@ public class MainWindow extends JFrame {
     private void updateTable() {
         List<Transaction> list = transactionService.getAllTransactions();
         String[] cols = {"Сума", "Категорія", "Дата", "Опис", "Валюта", "Тип"};
-        javax.swing.table.DefaultTableModel model = new javax.swing.table.DefaultTableModel(cols, 0);
+        DefaultTableModel model = new DefaultTableModel(cols, 0);
         for (Transaction t : list) {
             model.addRow(new Object[]{
-                    t.getAmount(),
+                    String.format("%.2f", t.getAmount()),
                     t.getCategory(),
                     t.getDate(),
                     t.getDescription(),
@@ -245,25 +210,28 @@ public class MainWindow extends JFrame {
         double limit = budgetService.getMonthlyLimit();
         boolean exceeded = budgetService.isLimitExceeded(expense);
 
-        incomeLabel.setText(" Дохід: " + income + " грн ");
-        expenseLabel.setText(" Витрати: " + expense + " грн ");
-        balanceLabel.setText(" Баланс: " + balance + " грн ");
-        limitLabel.setText(" Ліміт: " + limit + " грн " + (exceeded ? "(перевищено!)" : ""));
+        incomeLabel.setText(" Дохід: " + String.format("%.2f", income) + " грн ");
+        expenseLabel.setText(" Витрати: " + String.format("%.2f", expense) + " грн ");
+        balanceLabel.setText(" Баланс: " + String.format("%.2f", balance) + " грн ");
+        limitLabel.setText(" Ліміт: " + String.format("%.2f", limit) + " грн " + (exceeded ? "(перевищено!)" : ""));
     }
 
     private void updateCurrency() {
         Map<String, Double> rates = currencyService.getAllRates();
         StringBuilder sb = new StringBuilder();
+
         double usd = rates.getOrDefault("USD", 1.0);
         double eur = rates.getOrDefault("EUR", 1.0);
+
         sb.append("1 EUR → ").append(String.format("%.2f", eur)).append(" UAH\n");
         sb.append("1 USD → ").append(String.format("%.2f", usd)).append(" UAH\n");
+
         currencyArea.setText(sb.toString());
     }
 
     private void initDefaultCategories() {
         categoryService.addCategory(new Category("Зарплата", "income", "💰"));
-        categoryService.addCategory(new Category("Фріланс", "income", "🧑‍"));
+        categoryService.addCategory(new Category("Фріланс", "income", "🧑‍💻"));
         categoryService.addCategory(new Category("Подарунок", "income", "🎁"));
         categoryService.addCategory(new Category("Їжа", "expense", "🍔"));
         categoryService.addCategory(new Category("Транспорт", "expense", "🚗"));
