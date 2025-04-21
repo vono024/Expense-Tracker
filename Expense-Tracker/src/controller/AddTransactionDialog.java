@@ -2,14 +2,15 @@ package controller;
 
 import model.Category;
 import model.Transaction;
+import service.BudgetService;
+import service.CategoryLimitService;
 import service.CategoryService;
 import service.CurrencyService;
+import service.TimeLimitService;
 import service.TransactionService;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +23,10 @@ public class AddTransactionDialog extends JDialog {
     private final JComboBox<String> categoryBox = new JComboBox<>();
     private final JButton saveBtn = new JButton("Зберегти");
 
+    private final BudgetService budgetService = new BudgetService();
+    private final CategoryLimitService categoryLimitService = new CategoryLimitService();
+    private final TimeLimitService timeLimitService = new TimeLimitService();
+
     public AddTransactionDialog(JFrame parent, TransactionService transactionService, CategoryService categoryService, CurrencyService currencyService) {
         super(parent, "Додати транзакцію", true);
         setSize(300, 250);
@@ -30,25 +35,23 @@ public class AddTransactionDialog extends JDialog {
 
         add(new JLabel("Сума:"));
         add(amountField);
-
         add(new JLabel("Опис:"));
         add(descriptionField);
-
         add(new JLabel("Тип:"));
         add(typeBox);
-
         add(new JLabel("Категорія:"));
         add(categoryBox);
-
         add(new JLabel("Валюта:"));
         add(currencyBox);
-
         add(new JLabel());
         add(saveBtn);
 
+        typeBox.addActionListener(e -> updateCategories(categoryService));
         updateCategories(categoryService);
 
-        typeBox.addActionListener(e -> updateCategories(categoryService));
+        for (String currency : currencyService.getAllRates().keySet()) {
+            currencyBox.addItem(currency);
+        }
 
         amountField.setDocument(new javax.swing.text.PlainDocument() {
             @Override
@@ -75,27 +78,62 @@ public class AddTransactionDialog extends JDialog {
                 double rate = currencyService.getRate(currency);
                 double amountInUAH = amount * rate;
 
-                Transaction t = new Transaction(amountInUAH, category, date, description, currency, type);
-                transactionService.addTransaction(t);
+                Transaction newTransaction = new Transaction(amountInUAH, category, date, description, currency, type);
+
+                if (type.equals("expense")) {
+                    List<Transaction> all = transactionService.getAllTransactions();
+
+                    if (budgetService.isLimitExceeded(reportTotal(all) + amountInUAH)) {
+                        showWarning("Перевищено глобальний ліміт місяця!");
+                        return;
+                    }
+
+                    if (categoryLimitService.isLimitExceeded(category, all)) {
+                        showWarning("Перевищено ліміт по категорії: " + category);
+                        return;
+                    }
+
+                    if (timeLimitService.isLimitExceeded(TimeLimitService.LimitType.DAILY, all)) {
+                        showWarning("Перевищено денний ліміт!");
+                        return;
+                    }
+
+                    if (timeLimitService.isLimitExceeded(TimeLimitService.LimitType.WEEKLY, all)) {
+                        showWarning("Перевищено тижневий ліміт!");
+                        return;
+                    }
+                }
+
+                transactionService.addTransaction(newTransaction);
                 dispose();
+
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Введіть коректну суму.");
+                JOptionPane.showMessageDialog(this, "Некоректна сума.");
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Помилка збереження транзакції.");
+                JOptionPane.showMessageDialog(this, "Помилка збереження.");
             }
         });
     }
 
     private void updateCategories(CategoryService categoryService) {
-        String selectedType = (String) typeBox.getSelectedItem();
-        List<Category> filtered = categoryService.getAllCategories().stream()
-                .filter(c -> c.getType().equals(selectedType))
-                .collect(Collectors.toList());
-
         categoryBox.removeAllItems();
-        for (Category c : filtered) {
-            categoryBox.addItem(c.getName());
-        }
+        String type = (String) typeBox.getSelectedItem();
+        List<String> names = categoryService.getAllCategories().stream()
+                .filter(c -> c.getType().equals(type))
+                .map(Category::getName)
+                .collect(Collectors.toList());
+        for (String c : names) categoryBox.addItem(c);
+    }
+
+    private void showWarning(String message) {
+        JOptionPane.showMessageDialog(this, message, "Увага", JOptionPane.WARNING_MESSAGE);
+    }
+
+    private double reportTotal(List<Transaction> list) {
+        return list.stream()
+                .filter(t -> t.getType().equals("expense"))
+                .mapToDouble(Transaction::getAmount)
+                .sum();
     }
 
     public AddTransactionDialog(JFrame parent, TransactionService transactionService, Transaction transaction, CategoryService categoryService, CurrencyService currencyService) {
@@ -107,7 +145,7 @@ public class AddTransactionDialog extends JDialog {
         currencyBox.setSelectedItem(transaction.getCurrency());
         categoryBox.setSelectedItem(transaction.getCategory());
 
-        for (ActionListener al : saveBtn.getActionListeners()) {
+        for (java.awt.event.ActionListener al : saveBtn.getActionListeners()) {
             saveBtn.removeActionListener(al);
         }
 
@@ -129,9 +167,9 @@ public class AddTransactionDialog extends JDialog {
                 transactionService.updateTransaction(transaction, updated);
                 dispose();
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Введіть коректну суму.");
+                JOptionPane.showMessageDialog(this, "Некоректна сума.");
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Помилка оновлення транзакції.");
+                JOptionPane.showMessageDialog(this, "Помилка оновлення.");
             }
         });
     }
