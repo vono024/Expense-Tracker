@@ -31,11 +31,11 @@ public class LimitManagerDialog extends JDialog {
         this.categoryLimitService = categoryLimitService;
         this.timeLimitService = timeLimitService;
 
-        setSize(400, 300); // Зменшуємо розмір вікна
+        setSize(600, 300); // Збільшити ширину вікна
         setLocationRelativeTo(parent);
-        setLayout(new BorderLayout());
+        setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 
-        JPanel fieldsPanel = new JPanel(new GridLayout(6, 2, 5, 5));  // Оновлюємо кількість рядків до 6
+        JPanel fieldsPanel = new JPanel(new GridLayout(5, 2, 5, 5));
         fieldsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         fieldsPanel.add(new JLabel("Глобальний ліміт:"));
@@ -53,15 +53,16 @@ public class LimitManagerDialog extends JDialog {
         fieldsPanel.add(new JLabel("Ліміт категорії:"));
         fieldsPanel.add(categoryLimitField);
 
+        JPanel buttonPanel = new JPanel();
         JButton saveBtn = new JButton("Зберегти");
         JButton clearBtn = new JButton("Очистити всі");
 
-        fieldsPanel.add(saveBtn);
-        fieldsPanel.add(clearBtn);
+        buttonPanel.add(saveBtn);
+        buttonPanel.add(clearBtn);
 
-        add(fieldsPanel, BorderLayout.CENTER); // Оновлюємо, щоб тільки ці поля відображались
+        add(fieldsPanel);
+        add(buttonPanel);
 
-        // Збереження лімітів в LimitManagerDialog
         saveBtn.addActionListener(e -> {
             try {
                 if (!globalLimitField.getText().isEmpty()) {
@@ -85,7 +86,6 @@ public class LimitManagerDialog extends JDialog {
                     categoryLimitService.setLimit(selectedCat, catLimit);
                 }
 
-                // Після збереження лімітів оновлюємо їх на головному екрані
                 ((MainWindow) getParent()).updateLimitsView();
 
                 JOptionPane.showMessageDialog(this, "Ліміти збережено.");
@@ -95,14 +95,17 @@ public class LimitManagerDialog extends JDialog {
         });
 
         clearBtn.addActionListener(e -> {
-            budgetService.clear();
-            timeLimitService.clear();  // очищення лімітів часу
-            categoryLimitService.clear();  // очищення лімітів категорій
+            budgetService.clear(); // Очищуємо глобальний ліміт
+            timeLimitService.clear(); // Очищаємо денний та тижневий ліміти
+            categoryLimitService.clear(); // Очищаємо ліміти для категорій
+
+            // Оновлюємо відображення лімітів в головному вікні
+            ((MainWindow) getParent()).updateLimitsView(); // Оновлюємо ліміти на головному екрані
+
             JOptionPane.showMessageDialog(this, "Усі ліміти очищено.");
         });
 
         updateCategoryCombo();
-
         setDecimalInputFilter(globalLimitField);
         setDecimalInputFilter(dailyLimitField);
         setDecimalInputFilter(weeklyLimitField);
@@ -116,29 +119,14 @@ public class LimitManagerDialog extends JDialog {
     }
 
     private void setDecimalInputFilter(JTextField field) {
-        ((AbstractDocument) field.getDocument()).setDocumentFilter(new DocumentFilter() {
+        field.setDocument(new PlainDocument() {
             @Override
-            public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
-                    throws BadLocationException {
-                String text = fb.getDocument().getText(0, fb.getDocument().getLength());
-                String newText = text.substring(0, offset) + string + text.substring(offset);
-                if (isValidInput(newText)) {
-                    super.insertString(fb, offset, string, attr);
+            public void insertString(int offset, String str, AttributeSet a) throws BadLocationException {
+                String text = getText(0, getLength());
+                String newText = text.substring(0, offset) + str + text.substring(offset);
+                if (newText.matches("\\d{0,10}(\\.\\d{0,2})?")) {
+                    super.insertString(offset, str, a);
                 }
-            }
-
-            @Override
-            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
-                    throws BadLocationException {
-                String currentText = fb.getDocument().getText(0, fb.getDocument().getLength());
-                String newText = currentText.substring(0, offset) + text + currentText.substring(offset + length);
-                if (isValidInput(newText)) {
-                    super.replace(fb, offset, length, text, attrs);
-                }
-            }
-
-            private boolean isValidInput(String text) {
-                return text.matches("\\d{0,10}(\\.\\d{0,2})?"); // Правило для чисел з двома знаками після коми
             }
         });
     }
