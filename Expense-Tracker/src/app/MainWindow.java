@@ -27,7 +27,6 @@ public class MainWindow extends JFrame {
     private JLabel incomeLabel, expenseLabel, balanceLabel, limitLabel;
     private JTextArea currencyArea;
     private JTextArea limitsTextArea;
-    private JProgressBar limitProgress;
 
     private final TransactionService transactionService = new TransactionService();
     private final ReportService reportService = new ReportService();
@@ -71,14 +70,11 @@ public class MainWindow extends JFrame {
         expenseLabel = new JLabel();
         balanceLabel = new JLabel();
         limitLabel = new JLabel();
-        limitProgress = new JProgressBar(0, 100);
-        limitProgress.setStringPainted(true);
 
         summary.add(incomeLabel);
         summary.add(expenseLabel);
         summary.add(balanceLabel);
         summary.add(limitLabel);
-        summary.add(limitProgress);
 
         currencyArea = new JTextArea(4, 30);
         currencyArea.setEditable(false);
@@ -212,15 +208,10 @@ public class MainWindow extends JFrame {
         double income = reportService.getTotalByType(list, "income");
         double expense = reportService.getTotalByType(list, "expense");
         double balance = income - expense;
-        double limit = budgetService.getMonthlyLimit();
-        boolean exceeded = budgetService.isLimitExceeded(expense);
-        int percent = (limit > 0) ? (int) ((expense / limit) * 100) : 0;
 
         incomeLabel.setText(" Дохід: " + df.format(income) + " грн ");
         expenseLabel.setText(" Витрати: " + df.format(expense) + " грн ");
         balanceLabel.setText(" Баланс: " + df.format(balance) + " грн ");
-        limitLabel.setText(" Ліміт: " + df.format(limit) + " грн " + (exceeded ? "(перевищено!)" : ""));
-        limitProgress.setValue(Math.min(percent, 100));
     }
 
     public void updateLimitsView() {
