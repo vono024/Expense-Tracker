@@ -1,38 +1,42 @@
 package service;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDate;
 
 public class TimeLimitService {
 
-    public enum LimitType {
-        DAILY, WEEKLY
-    }
+    public enum LimitType {DAILY, WEEKLY}
 
-    private Map<LimitType, Double> limits = new HashMap<>();
+    private double dailyLimit;
+    private double weeklyLimit;
 
-    public TimeLimitService() {
-        // Initial values (if necessary)
-        limits.put(LimitType.DAILY, 1000.0);
-        limits.put(LimitType.WEEKLY, 10000.0);
+    public void setLimit(LimitType type, double limit) {
+        if (type == LimitType.DAILY) {
+            this.dailyLimit = limit;
+        } else if (type == LimitType.WEEKLY) {
+            this.weeklyLimit = limit;
+        }
     }
 
     public double getLimit(LimitType type) {
-        return limits.getOrDefault(type, 0.0);
+        if (type == LimitType.DAILY) {
+            return dailyLimit;
+        } else if (type == LimitType.WEEKLY) {
+            return weeklyLimit;
+        }
+        return 0.0;
     }
 
-    public void setLimit(LimitType type, double value) {
-        limits.put(type, value);
+    public boolean isLimitExceeded(LimitType type, double totalExpenseForPeriod) {
+        if (type == LimitType.DAILY) {
+            return totalExpenseForPeriod > dailyLimit;
+        } else if (type == LimitType.WEEKLY) {
+            return totalExpenseForPeriod > weeklyLimit;
+        }
+        return false;
     }
 
-    // Перевірка, чи перевищено ліміт часу (денний або тижневий)
-    public boolean isLimitExceeded(LimitType type, double amount) {
-        double currentLimit = getLimit(type);
-        return currentLimit >= 0 && (amount > currentLimit);
-    }
-
-    // Метод для очищення лімітів часу
     public void clear() {
-        limits.clear();
+        this.dailyLimit = 0;
+        this.weeklyLimit = 0;
     }
 }

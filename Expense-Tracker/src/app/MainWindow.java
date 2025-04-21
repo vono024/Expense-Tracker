@@ -24,9 +24,10 @@ import java.util.Map;
 
 public class MainWindow extends JFrame {
     private JTable table;
-    private JLabel incomeLabel, expenseLabel, balanceLabel;
+    private JLabel incomeLabel, expenseLabel, balanceLabel, limitLabel;
     private JTextArea currencyArea;
-    private JTextArea currentLimitsArea;  // Додано для відображення лімітів
+    private JTextArea limitsTextArea;  // Новий JTextArea для відображення лімітів
+    private JProgressBar limitProgress;
 
     private final TransactionService transactionService = new TransactionService();
     private final ReportService reportService = new ReportService();
@@ -64,15 +65,20 @@ public class MainWindow extends JFrame {
         table = new JTable();
         JScrollPane scrollPane = new JScrollPane(table);
 
-        JPanel bottomPanel = new JPanel(new GridLayout(2, 1));
+        JPanel bottomPanel = new JPanel(new GridLayout(1, 3));
         JPanel summary = new JPanel(new FlowLayout(FlowLayout.LEFT));
         incomeLabel = new JLabel();
         expenseLabel = new JLabel();
         balanceLabel = new JLabel();
+        limitLabel = new JLabel();
+        limitProgress = new JProgressBar(0, 100);
+        limitProgress.setStringPainted(true);
 
         summary.add(incomeLabel);
         summary.add(expenseLabel);
         summary.add(balanceLabel);
+        summary.add(limitLabel);
+        summary.add(limitProgress);
 
         currencyArea = new JTextArea(4, 30);
         currencyArea.setEditable(false);
@@ -82,20 +88,20 @@ public class MainWindow extends JFrame {
         currencyPanel.add(currencyScroll, BorderLayout.CENTER);
 
         // Текстова область для лімітів
-        currentLimitsArea = new JTextArea(10, 30);
-        currentLimitsArea.setEditable(false);
-        JScrollPane limitsScroll = new JScrollPane(currentLimitsArea);
+        limitsTextArea = new JTextArea(12, 30);  // Оновлена JTextArea для лімітів
+        limitsTextArea.setEditable(false);
+        JScrollPane limitsScroll = new JScrollPane(limitsTextArea);
         JPanel limitsPanel = new JPanel(new BorderLayout());
-        limitsPanel.setBorder(BorderFactory.createTitledBorder("Активні ліміти"));
+        limitsPanel.setBorder(BorderFactory.createTitledBorder("Актуальні ліміти"));
         limitsPanel.add(limitsScroll, BorderLayout.CENTER);
 
         bottomPanel.add(summary);
         bottomPanel.add(currencyPanel);
+        bottomPanel.add(limitsPanel);  // Додаємо панель з лімітаами
 
         add(topPanel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
-        add(limitsPanel, BorderLayout.EAST);  // Панель лімітів перенесена праворуч
 
         JPopupMenu popup = new JPopupMenu();
         JMenuItem edit = new JMenuItem("Редагувати");
@@ -199,7 +205,7 @@ public class MainWindow extends JFrame {
         table.setModel(model);
         updateSummary();
         updateCurrency();
-        updateLimitsView();
+        updateLimitsView();  // Оновлення лімітів на екрані
     }
 
     private void updateSummary() {
@@ -207,35 +213,45 @@ public class MainWindow extends JFrame {
         double income = reportService.getTotalByType(list, "income");
         double expense = reportService.getTotalByType(list, "expense");
         double balance = income - expense;
+        double limit = budgetService.getMonthlyLimit();
+        boolean exceeded = budgetService.isLimitExceeded(expense);
+        int percent = (limit > 0) ? (int) ((expense / limit) * 100) : 0;
 
         incomeLabel.setText(" Дохід: " + df.format(income) + " грн ");
         expenseLabel.setText(" Витрати: " + df.format(expense) + " грн ");
         balanceLabel.setText(" Баланс: " + df.format(balance) + " грн ");
+        limitLabel.setText(" Ліміт: " + df.format(limit) + " грн " + (exceeded ? "(перевищено!)" : ""));
+        limitProgress.setValue(Math.min(percent, 100));
     }
 
-    private void updateLimitsView() {
+    public void updateLimitsView() {
         StringBuilder sb = new StringBuilder();
 
-        // Global Limit
+        // Глобальний ліміт
         double globalLimit = budgetService.getMonthlyLimit();
         sb.append("🌐 Глобальний: ").append(df.format(globalLimit)).append(" грн\n");
 
-        // Daily Limit
+        // Денний ліміт
         double dailyLimit = timeLimitService.getLimit(TimeLimitService.LimitType.DAILY);
         sb.append("📅 Денний: ").append(df.format(dailyLimit)).append(" грн\n");
 
-        // Weekly Limit
+        // Тижневий ліміт
         double weeklyLimit = timeLimitService.getLimit(TimeLimitService.LimitType.WEEKLY);
         sb.append("📆 Тижневий: ").append(df.format(weeklyLimit)).append(" грн\n");
 
-        // Category Limits
+        // Ліміти по категоріях
         sb.append("📂 Категорії витрат:\n");
         for (Map.Entry<String, Double> entry : categoryLimitService.getAllLimits().entrySet()) {
             sb.append("   - ").append(entry.getKey()).append(": ").append(df.format(entry.getValue())).append(" грн\n");
         }
 
-        // Updating the right side panel with the limits
-        currentLimitsArea.setText(sb.toString());
+        limitsTextArea.setText(sb.toString());
+
+        // Прогрес-бар для ліміту
+        double totalExpense = reportService.getTotalByType(transactionService.getAllTransactions(), "expense");
+        int progress = (int) ((totalExpense / globalLimit) * 100);
+        limitProgress.setValue(Math.min(progress, 100));
+        limitProgress.setString(progress + "%");
     }
 
     private void updateCurrency() {

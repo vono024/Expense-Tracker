@@ -1,5 +1,6 @@
 package controller;
 
+import app.MainWindow;
 import service.BudgetService;
 import service.CategoryLimitService;
 import service.TimeLimitService;
@@ -60,6 +61,7 @@ public class LimitManagerDialog extends JDialog {
 
         add(fieldsPanel, BorderLayout.CENTER); // Оновлюємо, щоб тільки ці поля відображались
 
+        // Збереження лімітів в LimitManagerDialog
         saveBtn.addActionListener(e -> {
             try {
                 if (!globalLimitField.getText().isEmpty()) {
@@ -82,6 +84,9 @@ public class LimitManagerDialog extends JDialog {
                     double catLimit = Double.parseDouble(categoryLimitField.getText());
                     categoryLimitService.setLimit(selectedCat, catLimit);
                 }
+
+                // Після збереження лімітів оновлюємо їх на головному екрані
+                ((MainWindow) getParent()).updateLimitsView();
 
                 JOptionPane.showMessageDialog(this, "Ліміти збережено.");
             } catch (Exception ex) {
