@@ -1,71 +1,72 @@
 package service;
 
 import model.Transaction;
-import util.DateUtils;
 
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class ReportService {
 
-    private CurrencyService currencyService = new CurrencyService();
-
     public double getTotalByType(List<Transaction> list, String type) {
         return list.stream()
-                .filter(t -> t.getType().equalsIgnoreCase(type))
-                .mapToDouble(t -> {
-                    double rate = currencyService.getRate(t.getCurrency());
-                    System.out.println("DEBUG → " + t.getAmount() + " " + t.getCurrency() + " → курс: " + rate);
-                    return t.getAmount() * rate;
-                })
+                .filter(t -> t.getType().equals(type))
+                .mapToDouble(Transaction::getAmount)
                 .sum();
     }
 
-    public double getCategorySum(List<Transaction> list, String category) {
+    public double getTotalByCategory(List<Transaction> list, String category) {
         return list.stream()
-                .filter(t -> t.getCategory().equalsIgnoreCase(category))
-                .mapToDouble(t -> t.getAmount() * currencyService.getRate(t.getCurrency()))
+                .filter(t -> t.getCategory().equals(category))
+                .mapToDouble(Transaction::getAmount)
                 .sum();
     }
 
-    public Map<String, Double> getGroupedCategoryTotals(List<Transaction> list, String type) {
+    public double getTotalForDate(List<Transaction> list, java.time.LocalDate date) {
         return list.stream()
-                .filter(t -> t.getType().equalsIgnoreCase(type))
-                .collect(Collectors.groupingBy(
-                        Transaction::getCategory,
-                        Collectors.summingDouble(t -> t.getAmount() * currencyService.getRate(t.getCurrency()))
-                ));
-    }
-
-    public double getTotalForCurrentMonth(List<Transaction> list, String type) {
-        LocalDate now = LocalDate.now();
-        return list.stream()
-                .filter(t -> t.getType().equalsIgnoreCase(type))
-                .filter(t -> DateUtils.isSameMonth(t.getDate(), now))
-                .mapToDouble(t -> t.getAmount() * currencyService.getRate(t.getCurrency()))
+                .filter(t -> t.getDate().equals(date))
+                .mapToDouble(Transaction::getAmount)
                 .sum();
     }
 
-    public double getAverageTransaction(List<Transaction> list, String type) {
+    public double getTotalForWeek(List<Transaction> list, java.time.LocalDate date) {
+        java.time.DayOfWeek firstDayOfWeek = java.time.DayOfWeek.MONDAY;
+        java.time.LocalDate start = date.with(java.time.temporal.TemporalAdjusters.previousOrSame(firstDayOfWeek));
+        java.time.LocalDate end = start.plusDays(6);
         return list.stream()
-                .filter(t -> t.getType().equalsIgnoreCase(type))
-                .mapToDouble(t -> t.getAmount() * currencyService.getRate(t.getCurrency()))
-                .average()
-                .orElse(0.0);
-    }
-
-    public List<Transaction> getTopTransactions(List<Transaction> list, String type, int topN) {
-        return list.stream()
-                .filter(t -> t.getType().equalsIgnoreCase(type))
-                .sorted(Comparator.comparingDouble(t -> -t.getAmount() * currencyService.getRate(t.getCurrency())))
-                .limit(topN)
-                .collect(Collectors.toList());
+                .filter(t -> !t.getDate().isBefore(start) && !t.getDate().isAfter(end))
+                .mapToDouble(Transaction::getAmount)
+                .sum();
     }
 
     public double getBalance(List<Transaction> list) {
         double income = getTotalByType(list, "income");
         double expense = getTotalByType(list, "expense");
         return income - expense;
+    }
+
+    public double getAverageTransaction(List<Transaction> list, String type) {
+        List<Transaction> filtered = list.stream()
+                .filter(t -> t.getType().equals(type))
+                .collect(Collectors.toList());
+
+        return filtered.stream()
+                .mapToDouble(Transaction::getAmount)
+                .average()
+                .orElse(0);
+    }
+
+    public Map<String, Double> getGroupedCategoryTotals(List<Transaction> list, String type) {
+        return list.stream()
+                .filter(t -> t.getType().equals(type))
+                .collect(Collectors.groupingBy(Transaction::getCategory,
+                        Collectors.summingDouble(Transaction::getAmount)));
+    }
+
+    public List<Transaction> getTopTransactions(List<Transaction> list, String type, int limit) {
+        return list.stream()
+                .filter(t -> t.getType().equals(type))
+                .sorted((a, b) -> Double.compare(b.getAmount(), a.getAmount()))
+                .limit(limit)
+                .collect(Collectors.toList());
     }
 }

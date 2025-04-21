@@ -1,40 +1,52 @@
 package service;
 
-import model.Budget;
-
-import java.time.YearMonth;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.*;
 
 public class BudgetService {
-    private final Map<YearMonth, Budget> budgets = new HashMap<>();
+    private double monthlyLimit = 0.0;
+    private static final String FILE_PATH = "resources/limits-budget.txt";
 
-    public void setMonthlyLimit(double amount) {
-        YearMonth current = YearMonth.now();
-        budgets.put(current, new Budget(current, amount));
+    public BudgetService() {
+        load();
+    }
+
+    public void setMonthlyLimit(double limit) {
+        this.monthlyLimit = limit;
+        save();
     }
 
     public double getMonthlyLimit() {
-        YearMonth current = YearMonth.now();
-        Budget budget = budgets.get(current);
-        return budget != null ? budget.getLimit() : 0.0;
+        return monthlyLimit;
     }
 
-    public boolean isLimitExceeded(double expensesThisMonth) {
-        double limit = getMonthlyLimit();
-        return limit > 0 && expensesThisMonth > limit;
-    }
-
-    public Budget getBudgetForCurrentMonth() {
-        YearMonth current = YearMonth.now();
-        return budgets.getOrDefault(current, new Budget(current, 0.0));
-    }
-
-    public Map<YearMonth, Budget> getAllBudgets() {
-        return new HashMap<>(budgets);
+    public boolean isLimitExceeded(double totalExpense) {
+        return totalExpense > monthlyLimit && monthlyLimit > 0;
     }
 
     public void clear() {
-        budgets.clear();
+        monthlyLimit = 0.0;
+        save();
+    }
+
+    private void save() {
+        try (PrintWriter out = new PrintWriter(new FileWriter(FILE_PATH))) {
+            out.println(monthlyLimit);
+        } catch (IOException e) {
+            System.out.println("Помилка збереження глобального ліміту: " + e.getMessage());
+        }
+    }
+
+    private void load() {
+        File file = new File(FILE_PATH);
+        if (!file.exists()) return;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line = reader.readLine();
+            if (line != null) {
+                monthlyLimit = Double.parseDouble(line);
+            }
+        } catch (IOException e) {
+            System.out.println("Помилка завантаження глобального ліміту: " + e.getMessage());
+        }
     }
 }

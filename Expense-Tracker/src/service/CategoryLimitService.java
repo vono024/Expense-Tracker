@@ -1,13 +1,17 @@
 package service;
 
-import model.Transaction;
-
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class CategoryLimitService {
-    private final Map<String, Double> categoryLimits = new HashMap<>();
+
+    private Map<String, Double> categoryLimits = new HashMap<>();
+
+    public CategoryLimitService() {
+        // Initial values (if necessary)
+        categoryLimits.put("Їжа", 500.0);
+        categoryLimits.put("Транспорт", 1000.0);
+    }
 
     public void setLimit(String category, double limit) {
         categoryLimits.put(category, limit);
@@ -17,25 +21,18 @@ public class CategoryLimitService {
         return categoryLimits.getOrDefault(category, 0.0);
     }
 
-    public boolean isLimitExceeded(String category, List<Transaction> transactions) {
-        double total = getTotalForCategory(category, transactions);
-        double limit = getLimit(category);
-        return total > limit && limit > 0;
-    }
-
-    public double getTotalForCategory(String category, List<Transaction> transactions) {
-        return transactions.stream()
-                .filter(t -> t.getType().equals("expense"))
-                .filter(t -> t.getCategory().equals(category))
-                .mapToDouble(Transaction::getAmount)
-                .sum();
-    }
-
     public Map<String, Double> getAllLimits() {
         return categoryLimits;
     }
 
-    public void clearLimits() {
+    // Перевірка, чи перевищено ліміт для категорії
+    public boolean isLimitExceeded(String category, double amount) {
+        double currentLimit = getLimit(category);
+        return currentLimit >= 0 && (amount > currentLimit);
+    }
+
+    // Метод для очищення лімітів категорій
+    public void clear() {
         categoryLimits.clear();
     }
 }

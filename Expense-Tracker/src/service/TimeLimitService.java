@@ -1,11 +1,7 @@
 package service;
 
-import model.Transaction;
-
-import java.time.LocalDate;
-import java.time.temporal.WeekFields;
-import java.util.List;
-import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TimeLimitService {
 
@@ -13,50 +9,30 @@ public class TimeLimitService {
         DAILY, WEEKLY
     }
 
-    private double dailyLimit = 0;
-    private double weeklyLimit = 0;
+    private Map<LimitType, Double> limits = new HashMap<>();
 
-    public void setLimit(LimitType type, double limit) {
-        if (type == LimitType.DAILY) dailyLimit = limit;
-        else weeklyLimit = limit;
+    public TimeLimitService() {
+        // Initial values (if necessary)
+        limits.put(LimitType.DAILY, 1000.0);
+        limits.put(LimitType.WEEKLY, 10000.0);
     }
 
     public double getLimit(LimitType type) {
-        return (type == LimitType.DAILY) ? dailyLimit : weeklyLimit;
+        return limits.getOrDefault(type, 0.0);
     }
 
-    public boolean isLimitExceeded(LimitType type, List<Transaction> transactions) {
-        double total = (type == LimitType.DAILY)
-                ? getTodayTotal(transactions)
-                : getThisWeekTotal(transactions);
-        double limit = getLimit(type);
-        return limit > 0 && total > limit;
+    public void setLimit(LimitType type, double value) {
+        limits.put(type, value);
     }
 
-    public double getTodayTotal(List<Transaction> transactions) {
-        LocalDate today = LocalDate.now();
-        return transactions.stream()
-                .filter(t -> t.getType().equals("expense"))
-                .filter(t -> t.getDate().equals(today))
-                .mapToDouble(Transaction::getAmount)
-                .sum();
+    // Перевірка, чи перевищено ліміт часу (денний або тижневий)
+    public boolean isLimitExceeded(LimitType type, double amount) {
+        double currentLimit = getLimit(type);
+        return currentLimit >= 0 && (amount > currentLimit);
     }
 
-    public double getThisWeekTotal(List<Transaction> transactions) {
-        LocalDate now = LocalDate.now();
-        WeekFields weekFields = WeekFields.of(Locale.getDefault());
-        int currentWeek = now.get(weekFields.weekOfWeekBasedYear());
-        int currentYear = now.getYear();
-
-        return transactions.stream()
-                .filter(t -> t.getType().equals("expense"))
-                .filter(t -> {
-                    LocalDate date = t.getDate();
-                    int week = date.get(weekFields.weekOfWeekBasedYear());
-                    int year = date.getYear();
-                    return week == currentWeek && year == currentYear;
-                })
-                .mapToDouble(Transaction::getAmount)
-                .sum();
+    // Метод для очищення лімітів часу
+    public void clear() {
+        limits.clear();
     }
 }
