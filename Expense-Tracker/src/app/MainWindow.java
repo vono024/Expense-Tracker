@@ -26,7 +26,7 @@ public class MainWindow extends JFrame {
     private JTable table;
     private JLabel incomeLabel, expenseLabel, balanceLabel, limitLabel;
     private JTextArea currencyArea;
-    private JTextArea limitsTextArea;  // Новий JTextArea для відображення лімітів
+    private JTextArea limitsTextArea;
     private JProgressBar limitProgress;
 
     private final TransactionService transactionService = new TransactionService();
@@ -87,8 +87,7 @@ public class MainWindow extends JFrame {
         currencyPanel.setBorder(BorderFactory.createTitledBorder("Курси валют"));
         currencyPanel.add(currencyScroll, BorderLayout.CENTER);
 
-        // Текстова область для лімітів
-        limitsTextArea = new JTextArea(12, 30);  // Оновлена JTextArea для лімітів
+        limitsTextArea = new JTextArea(12, 30);
         limitsTextArea.setEditable(false);
         JScrollPane limitsScroll = new JScrollPane(limitsTextArea);
         JPanel limitsPanel = new JPanel(new BorderLayout());
@@ -97,7 +96,7 @@ public class MainWindow extends JFrame {
 
         bottomPanel.add(summary);
         bottomPanel.add(currencyPanel);
-        bottomPanel.add(limitsPanel);  // Додаємо панель з лімітаами
+        bottomPanel.add(limitsPanel);
 
         add(topPanel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
@@ -205,7 +204,7 @@ public class MainWindow extends JFrame {
         table.setModel(model);
         updateSummary();
         updateCurrency();
-        updateLimitsView();  // Оновлення лімітів на екрані
+        updateLimitsView();
     }
 
     private void updateSummary() {
@@ -227,31 +226,55 @@ public class MainWindow extends JFrame {
     public void updateLimitsView() {
         StringBuilder sb = new StringBuilder();
 
-        // Глобальний ліміт
         double globalLimit = budgetService.getMonthlyLimit();
-        sb.append("🌐 Глобальний: ").append(df.format(globalLimit)).append(" грн\n");
+        double totalExpense = reportService.getTotalByType(transactionService.getAllTransactions(), "expense");
+        int globalPercent = (globalLimit > 0) ? (int) ((totalExpense / globalLimit) * 100) : 0;
 
-        // Денний ліміт
+        // Перевищення ліміту
+        if (globalPercent > 100) {
+            globalPercent = 100;
+            sb.append("🌐 Глобальний: ").append(df.format(globalLimit)).append(" грн ").append(globalPercent).append("% Перевищено\n");
+        } else {
+            sb.append("🌐 Глобальний: ").append(df.format(globalLimit)).append(" грн ").append(globalPercent).append("%\n");
+        }
+
         double dailyLimit = timeLimitService.getLimit(TimeLimitService.LimitType.DAILY);
-        sb.append("📅 Денний: ").append(df.format(dailyLimit)).append(" грн\n");
+        double dailyExpense = reportService.getTotalByType(transactionService.getAllTransactions(), "expense");
+        int dailyPercent = (dailyLimit > 0) ? (int) ((dailyExpense / dailyLimit) * 100) : 0;
 
-        // Тижневий ліміт
+        if (dailyPercent > 100) {
+            dailyPercent = 100;
+            sb.append("📅 Денний: ").append(df.format(dailyLimit)).append(" грн ").append(dailyPercent).append("% Перевищено\n");
+        } else {
+            sb.append("📅 Денний: ").append(df.format(dailyLimit)).append(" грн ").append(dailyPercent).append("%\n");
+        }
+
         double weeklyLimit = timeLimitService.getLimit(TimeLimitService.LimitType.WEEKLY);
-        sb.append("📆 Тижневий: ").append(df.format(weeklyLimit)).append(" грн\n");
+        double weeklyExpense = reportService.getTotalByType(transactionService.getAllTransactions(), "expense");
+        int weeklyPercent = (weeklyLimit > 0) ? (int) ((weeklyExpense / weeklyLimit) * 100) : 0;
 
-        // Ліміти по категоріях
+        if (weeklyPercent > 100) {
+            weeklyPercent = 100;
+            sb.append("📆 Тижневий: ").append(df.format(weeklyLimit)).append(" грн ").append(weeklyPercent).append("% Перевищено\n");
+        } else {
+            sb.append("📆 Тижневий: ").append(df.format(weeklyLimit)).append(" грн ").append(weeklyPercent).append("%\n");
+        }
+
         sb.append("📂 Категорії витрат:\n");
         for (Map.Entry<String, Double> entry : categoryLimitService.getAllLimits().entrySet()) {
-            sb.append("   - ").append(entry.getKey()).append(": ").append(df.format(entry.getValue())).append(" грн\n");
+            double catLimit = entry.getValue();
+            double categoryExpense = reportService.getTotalByCategory(transactionService.getAllTransactions(), entry.getKey());
+            int categoryPercent = (catLimit > 0) ? (int) ((categoryExpense / catLimit) * 100) : 0;
+
+            if (categoryPercent > 100) {
+                categoryPercent = 100;
+                sb.append("   - ").append(entry.getKey()).append(": ").append(df.format(catLimit)).append(" грн ").append(categoryPercent).append("% Перевищено\n");
+            } else {
+                sb.append("   - ").append(entry.getKey()).append(": ").append(df.format(catLimit)).append(" грн ").append(categoryPercent).append("%\n");
+            }
         }
 
         limitsTextArea.setText(sb.toString());
-
-        // Прогрес-бар для ліміту
-        double totalExpense = reportService.getTotalByType(transactionService.getAllTransactions(), "expense");
-        int progress = (int) ((totalExpense / globalLimit) * 100);
-        limitProgress.setValue(Math.min(progress, 100));
-        limitProgress.setString(progress + "%");
     }
 
     private void updateCurrency() {
