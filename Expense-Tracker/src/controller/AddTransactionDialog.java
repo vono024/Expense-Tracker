@@ -21,8 +21,8 @@ public class AddTransactionDialog extends JDialog {
     private final JTextField amountField = new JTextField();
     private final JTextField descriptionField = new JTextField();
     private final JComboBox<String> typeBox = new JComboBox<>(new String[]{"income", "expense"});
-    private final JComboBox<String> currencyBox = new JComboBox<>();
     private final JComboBox<String> categoryBox = new JComboBox<>();
+    private final JComboBox<String> currencyBox = new JComboBox<>();
     private final JButton saveBtn = new JButton("Зберегти");
 
     private final TransactionService transactionService;
@@ -62,13 +62,10 @@ public class AddTransactionDialog extends JDialog {
         setLocationRelativeTo(getParent());
         setLayout(new GridLayout(6, 2, 10, 10));
 
-        for (Category c : categoryService.getAllCategories()) {
-            categoryBox.addItem(c.getName());
-        }
-        for (String code : currencyService.getAllRates().keySet()) {
-            currencyBox.addItem(code);
-        }
+        // Заповнюємо комбінований список для категорій на основі типу
+        updateCategoryComboBox();
 
+        // Додаємо комбіновані списки
         add(new JLabel("Сума:")); add(amountField);
         add(new JLabel("Опис:")); add(descriptionField);
         add(new JLabel("Тип:")); add(typeBox);
@@ -76,9 +73,17 @@ public class AddTransactionDialog extends JDialog {
         add(new JLabel("Валюта:")); add(currencyBox);
         add(new JLabel()); add(saveBtn);
 
+        // Слухач кнопки "Зберегти"
         saveBtn.addActionListener(e -> saveTransaction());
 
+        // Додаємо фільтр для введення десяткових значень
         setDecimalInputFilter(amountField);
+
+        // Динамічно змінюємо варіанти категорій при зміні типу
+        typeBox.addActionListener(e -> updateCategoryComboBox());
+
+        // Заповнюємо комбінований список валют
+        updateCurrencyComboBox();
     }
 
     private void fillForm(Transaction t) {
@@ -145,6 +150,35 @@ public class AddTransactionDialog extends JDialog {
 
     private void showWarning(String message) {
         JOptionPane.showMessageDialog(this, message, "Перевищення ліміту", JOptionPane.WARNING_MESSAGE);
+    }
+
+    private void updateCategoryComboBox() {
+        String selectedType = (String) typeBox.getSelectedItem();
+
+        // Очищаємо комбінований список
+        categoryBox.removeAllItems();
+
+        // Додаємо категорії для доходів або витрат в залежності від типу
+        if ("income".equals(selectedType)) {
+            for (Category c : categoryService.getAllCategories()) {
+                if (c.getType().equals("income")) {
+                    categoryBox.addItem(c.getName());
+                }
+            }
+        } else if ("expense".equals(selectedType)) {
+            for (Category c : categoryService.getAllCategories()) {
+                if (c.getType().equals("expense")) {
+                    categoryBox.addItem(c.getName());
+                }
+            }
+        }
+    }
+
+    private void updateCurrencyComboBox() {
+        currencyBox.removeAllItems();
+        for (String code : currencyService.getAllRates().keySet()) {
+            currencyBox.addItem(code);
+        }
     }
 
     private void setDecimalInputFilter(JTextField field) {

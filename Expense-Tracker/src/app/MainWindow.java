@@ -27,6 +27,7 @@ public class MainWindow extends JFrame {
     private JLabel incomeLabel, expenseLabel, balanceLabel, limitLabel;
     private JTextArea currencyArea;
     private JTextArea limitsTextArea;
+    private JProgressBar limitProgress;
 
     private final TransactionService transactionService = new TransactionService();
     private final ReportService reportService = new ReportService();
@@ -185,16 +186,14 @@ public class MainWindow extends JFrame {
 
     private void updateTable() {
         List<Transaction> list = transactionService.getAllTransactions();
-        String[] cols = {"Сума", "Категорія", "Дата", "Опис", "Валюта", "Тип"};
+        String[] cols = {"Сума", "Категорія", "Дата", "Опис"};
         DefaultTableModel model = new DefaultTableModel(cols, 0);
         for (Transaction t : list) {
             model.addRow(new Object[]{
-                    df.format(t.getAmount()),
+                    df.format(t.getAmount()) + " грн", // додано "грн" до суми
                     t.getCategory(),
                     t.getDate(),
-                    t.getDescription(),
-                    t.getCurrency(),
-                    t.getType()
+                    t.getDescription()
             });
         }
         table.setModel(model);
