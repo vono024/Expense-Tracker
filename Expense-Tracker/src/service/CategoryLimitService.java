@@ -7,11 +7,6 @@ public class CategoryLimitService {
 
     private Map<String, Double> categoryLimits = new HashMap<>();
 
-    public CategoryLimitService() {
-        categoryLimits.put("Їжа", 500.0);
-        categoryLimits.put("Транспорт", 1000.0);
-    }
-
     public void setLimit(String category, double limit) {
         categoryLimits.put(category, limit);
     }

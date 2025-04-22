@@ -46,6 +46,8 @@ public class MainWindow extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+
         initDefaultCategories();
 
         JPanel topPanel = new JPanel();
@@ -119,18 +121,37 @@ public class MainWindow extends JFrame {
         saveBtn.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Зберегти файл");
+
+            chooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV", "csv"));
+            chooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("TXT", "txt"));
+            chooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("JSON", "json"));
+
             int result = chooser.showSaveDialog(this);
             if (result == JFileChooser.APPROVE_OPTION) {
                 String path = chooser.getSelectedFile().getAbsolutePath();
+                String extension = path.substring(path.lastIndexOf(".") + 1); // Отримуємо розширення файлу
+
                 try {
-                    if (path.endsWith(".csv")) fileService.saveAsCsv(transactionService.getAllTransactions(), path);
-                    else if (path.endsWith(".txt")) fileService.saveAsTxt(transactionService.getAllTransactions(), path);
-                    else fileService.saveAsJson(transactionService.getAllTransactions(), path);
+                    switch (extension) {
+                        case "csv":
+                            fileService.saveAsCsv(transactionService.getAllTransactions(), path);
+                            break;
+                        case "txt":
+                            fileService.saveAsTxt(transactionService.getAllTransactions(), path);
+                            break;
+                        case "json":
+                            fileService.saveAsJson(transactionService.getAllTransactions(), path);
+                            break;
+                        default:
+                            JOptionPane.showMessageDialog(this, "Невідомий формат файлу.");
+                            break;
+                    }
                 } catch (IOException ex) {
                     JOptionPane.showMessageDialog(this, "Помилка при збереженні файлу.");
                 }
             }
         });
+
 
         loadBtn.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
@@ -185,14 +206,15 @@ public class MainWindow extends JFrame {
 
     private void updateTable() {
         List<Transaction> list = transactionService.getAllTransactions();
-        String[] cols = {"Сума", "Категорія", "Дата", "Опис"};
+        String[] cols = {"Сума", "Категорія", "Дата", "Опис", "Тип"};
         DefaultTableModel model = new DefaultTableModel(cols, 0);
         for (Transaction t : list) {
             model.addRow(new Object[]{
-                    df.format(t.getAmount()) + " грн", // додано "грн" до суми
+                    df.format(t.getAmount()) + " грн",
                     t.getCategory(),
                     t.getDate(),
-                    t.getDescription()
+                    t.getDescription(),
+                    t.getType()
             });
         }
         table.setModel(model);
@@ -232,9 +254,9 @@ public class MainWindow extends JFrame {
 
         if (dailyPercent > 100) {
             dailyPercent = 100;
-            sb.append("📅 Денний: ").append(df.format(dailyLimit)).append(" грн ").append(dailyPercent).append("% Перевищено\n");
+            sb.append("Денний: ").append(df.format(dailyLimit)).append(" грн ").append(dailyPercent).append("% Перевищено\n");
         } else {
-            sb.append("📅 Денний: ").append(df.format(dailyLimit)).append(" грн ").append(dailyPercent).append("%\n");
+            sb.append("Денний: ").append(df.format(dailyLimit)).append(" грн ").append(dailyPercent).append("%\n");
         }
 
         double weeklyLimit = timeLimitService.getLimit(TimeLimitService.LimitType.WEEKLY);
@@ -243,12 +265,12 @@ public class MainWindow extends JFrame {
 
         if (weeklyPercent > 100) {
             weeklyPercent = 100;
-            sb.append("📆 Тижневий: ").append(df.format(weeklyLimit)).append(" грн ").append(weeklyPercent).append("% Перевищено\n");
+            sb.append("Тижневий: ").append(df.format(weeklyLimit)).append(" грн ").append(weeklyPercent).append("% Перевищено\n");
         } else {
-            sb.append("📆 Тижневий: ").append(df.format(weeklyLimit)).append(" грн ").append(weeklyPercent).append("%\n");
+            sb.append("Тижневий: ").append(df.format(weeklyLimit)).append(" грн ").append(weeklyPercent).append("%\n");
         }
 
-        sb.append("📂 Категорії витрат:\n");
+        sb.append("Категорії витрат:\n");
         for (Map.Entry<String, Double> entry : categoryLimitService.getAllLimits().entrySet()) {
             double catLimit = entry.getValue();
             double categoryExpense = reportService.getTotalByCategory(transactionService.getAllTransactions(), entry.getKey());

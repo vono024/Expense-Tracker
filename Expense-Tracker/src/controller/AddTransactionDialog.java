@@ -5,10 +5,6 @@ import model.Category;
 import service.CategoryService;
 import service.CurrencyService;
 import service.TransactionService;
-import service.BudgetService;
-import service.CategoryLimitService;
-import service.TimeLimitService;
-import service.ReportService;
 
 import javax.swing.*;
 import javax.swing.text.*;

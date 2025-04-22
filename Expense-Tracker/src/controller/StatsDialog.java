@@ -10,11 +10,14 @@ import org.jfree.data.general.DefaultPieDataset;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
 
 public class StatsDialog extends JDialog {
     private final JTextArea output;
+
+    private final DecimalFormat df = new DecimalFormat("0.00");
 
     public StatsDialog(JFrame parent, TransactionService transactionService) {
         super(parent, "Статистика", true);
@@ -32,7 +35,7 @@ public class StatsDialog extends JDialog {
 
         Map<String, Double> categorySums = new ReportService().getGroupedCategoryTotals(transactionService.getAllTransactions(), "expense");
         DefaultPieDataset dataset = new DefaultPieDataset();
-        categorySums.forEach(dataset::setValue);
+        categorySums.forEach((key, value) -> dataset.setValue(key, value));
 
         JFreeChart pieChart = ChartFactory.createPieChart(
                 "Витрати по категоріях",
@@ -64,22 +67,22 @@ public class StatsDialog extends JDialog {
         List<Transaction> topExpenses = reportService.getTopTransactions(all, "expense", 3);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Загальний дохід: ").append(totalIncome).append(" грн\n");
-        sb.append("Загальні витрати: ").append(totalExpense).append(" грн\n");
-        sb.append("Баланс: ").append(balance).append(" грн\n\n");
+        sb.append("Загальний дохід: ").append(df.format(totalIncome)).append(" грн\n");
+        sb.append("Загальні витрати: ").append(df.format(totalExpense)).append(" грн\n");
+        sb.append("Баланс: ").append(df.format(balance)).append(" грн\n\n");
 
-        sb.append("Середній дохід: ").append(avgIncome).append(" грн\n");
-        sb.append("Середня витрата: ").append(avgExpense).append(" грн\n\n");
+        sb.append("Середній дохід: ").append(df.format(avgIncome)).append(" грн\n");
+        sb.append("Середня витрата: ").append(df.format(avgExpense)).append(" грн\n\n");
 
         sb.append("Витрати по категоріях:\n");
         for (Map.Entry<String, Double> entry : categorySums.entrySet()) {
-            sb.append(" - ").append(entry.getKey()).append(": ").append(entry.getValue()).append(" грн\n");
+            sb.append(" - ").append(entry.getKey()).append(": ").append(df.format(entry.getValue())).append(" грн\n");
         }
 
         sb.append("\nТоп витрат:\n");
         for (Transaction t : topExpenses) {
             sb.append(" - ").append(t.getDate()).append(" — ")
-                    .append(t.getAmount()).append(" грн (").append(t.getCategory()).append(" — ").append(t.getDescription()).append(")\n");
+                    .append(df.format(t.getAmount())).append(" грн (").append(t.getCategory()).append(" — ").append(t.getDescription()).append(")\n");
         }
 
         output.setText(sb.toString());
