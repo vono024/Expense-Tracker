@@ -15,8 +15,4 @@ public class CategoryService {
     public List<Category> getAllCategories() {
         return new ArrayList<>(categories);
     }
-
-    public boolean exists(String name) {
-        return categories.stream().anyMatch(c -> c.getName().equalsIgnoreCase(name));
-    }
 }

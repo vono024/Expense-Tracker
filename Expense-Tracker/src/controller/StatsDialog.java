@@ -64,19 +64,19 @@ public class StatsDialog extends JDialog {
         List<Transaction> topExpenses = reportService.getTopTransactions(all, "expense", 3);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("📊 Загальний дохід: ").append(totalIncome).append(" грн\n");
-        sb.append("📉 Загальні витрати: ").append(totalExpense).append(" грн\n");
-        sb.append("💰 Баланс: ").append(balance).append(" грн\n\n");
+        sb.append("Загальний дохід: ").append(totalIncome).append(" грн\n");
+        sb.append("Загальні витрати: ").append(totalExpense).append(" грн\n");
+        sb.append("Баланс: ").append(balance).append(" грн\n\n");
 
-        sb.append("📈 Середній дохід: ").append(avgIncome).append(" грн\n");
-        sb.append("📉 Середня витрата: ").append(avgExpense).append(" грн\n\n");
+        sb.append("Середній дохід: ").append(avgIncome).append(" грн\n");
+        sb.append("Середня витрата: ").append(avgExpense).append(" грн\n\n");
 
-        sb.append("🧾 Витрати по категоріях:\n");
+        sb.append("Витрати по категоріях:\n");
         for (Map.Entry<String, Double> entry : categorySums.entrySet()) {
             sb.append(" - ").append(entry.getKey()).append(": ").append(entry.getValue()).append(" грн\n");
         }
 
-        sb.append("\n🔥 Топ витрат:\n");
+        sb.append("\nТоп витрат:\n");
         for (Transaction t : topExpenses) {
             sb.append(" - ").append(t.getDate()).append(" — ")
                     .append(t.getAmount()).append(" грн (").append(t.getCategory()).append(" — ").append(t.getDescription()).append(")\n");

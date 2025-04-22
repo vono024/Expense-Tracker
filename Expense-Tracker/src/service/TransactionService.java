@@ -8,17 +8,6 @@ public class TransactionService {
     private List<Transaction> transactions = new ArrayList<>();
     private final SimpleDatabase db = new SimpleDatabase();
 
-    public void updateTransaction(Transaction oldTransaction, Transaction newTransaction) {
-        int index = transactions.indexOf(oldTransaction);
-        if (index != -1) {
-            transactions.set(index, newTransaction);
-            db.clearAll();
-            for (Transaction t : transactions) {
-                db.save(t);
-            }
-        }
-    }
-
     public TransactionService() {
         transactions = db.loadAll();
     }

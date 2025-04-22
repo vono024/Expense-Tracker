@@ -95,12 +95,11 @@ public class LimitManagerDialog extends JDialog {
         });
 
         clearBtn.addActionListener(e -> {
-            budgetService.clear(); // Очищуємо глобальний ліміт
-            timeLimitService.clear(); // Очищаємо денний та тижневий ліміти
-            categoryLimitService.clear(); // Очищаємо ліміти для категорій
+            budgetService.clear();
+            timeLimitService.clear();
+            categoryLimitService.clear();
 
-            // Оновлюємо відображення лімітів в головному вікні
-            ((MainWindow) getParent()).updateLimitsView(); // Оновлюємо ліміти на головному екрані
+            ((MainWindow) getParent()).updateLimitsView();
 
             JOptionPane.showMessageDialog(this, "Усі ліміти очищено.");
         });

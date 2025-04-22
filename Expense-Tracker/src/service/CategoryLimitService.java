@@ -8,7 +8,6 @@ public class CategoryLimitService {
     private Map<String, Double> categoryLimits = new HashMap<>();
 
     public CategoryLimitService() {
-        // Initial values (if necessary)
         categoryLimits.put("Їжа", 500.0);
         categoryLimits.put("Транспорт", 1000.0);
     }
@@ -25,13 +24,11 @@ public class CategoryLimitService {
         return categoryLimits;
     }
 
-    // Перевірка, чи перевищено ліміт для категорії
     public boolean isLimitExceeded(String category, double amount) {
         double currentLimit = getLimit(category);
         return currentLimit >= 0 && (amount > currentLimit);
     }
 
-    // Метод для очищення лімітів категорій
     public void clear() {
         categoryLimits.clear();
     }

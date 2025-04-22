@@ -39,7 +39,7 @@ public class SimpleDatabase {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setDouble(1, t.getAmount());
             ps.setString(2, t.getCategory());
-            ps.setString(3, t.getDate().toString()); // 👈 LocalDate -> String
+            ps.setString(3, t.getDate().toString());
             ps.setString(4, t.getDescription());
             ps.setString(5, t.getCurrency());
             ps.setString(6, t.getType());
@@ -59,7 +59,7 @@ public class SimpleDatabase {
                 Transaction t = new Transaction(
                         rs.getDouble("amount"),
                         rs.getString("category"),
-                        LocalDate.parse(rs.getString("date")), // 👈 String -> LocalDate
+                        LocalDate.parse(rs.getString("date")),
                         rs.getString("description"),
                         rs.getString("currency"),
                         rs.getString("type")

@@ -7,19 +7,6 @@ public class Currency {
     private String name;
     private double rateToUAH;
 
-    public Currency() {
-    }
-
-    public Currency(String code, String name, double rateToUAH) {
-        this.code = code;
-        this.name = name;
-        this.rateToUAH = rateToUAH;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
     public String getName() {
         return name;
     }

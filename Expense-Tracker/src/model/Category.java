@@ -21,22 +21,6 @@ public class Category {
         return type;
     }
 
-    public String getIcon() {
-        return icon;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public void setIcon(String icon) {
-        this.icon = icon;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

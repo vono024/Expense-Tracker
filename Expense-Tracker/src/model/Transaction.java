@@ -11,9 +11,6 @@ public class Transaction {
     private String currency;
     private String type;
 
-    public Transaction() {
-    }
-
     public Transaction(double amount, String category, LocalDate date, String description, String currency, String type) {
         this.amount = amount;
         this.category = category;
@@ -45,30 +42,6 @@ public class Transaction {
 
     public String getType() {
         return type;
-    }
-
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public void setDate(LocalDate date) {
-        this.date = date;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     @Override

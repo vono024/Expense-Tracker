@@ -27,7 +27,6 @@ public class MainWindow extends JFrame {
     private JLabel incomeLabel, expenseLabel, balanceLabel, limitLabel;
     private JTextArea currencyArea;
     private JTextArea limitsTextArea;
-    private JProgressBar limitProgress;
 
     private final TransactionService transactionService = new TransactionService();
     private final ReportService reportService = new ReportService();
@@ -220,12 +219,11 @@ public class MainWindow extends JFrame {
         double totalExpense = reportService.getTotalByType(transactionService.getAllTransactions(), "expense");
         int globalPercent = (globalLimit > 0) ? (int) ((totalExpense / globalLimit) * 100) : 0;
 
-        // Перевищення ліміту
         if (globalPercent > 100) {
             globalPercent = 100;
-            sb.append("🌐 Глобальний: ").append(df.format(globalLimit)).append(" грн ").append(globalPercent).append("% Перевищено\n");
+            sb.append("Глобальний: ").append(df.format(globalLimit)).append(" грн ").append(globalPercent).append("% Перевищено\n");
         } else {
-            sb.append("🌐 Глобальний: ").append(df.format(globalLimit)).append(" грн ").append(globalPercent).append("%\n");
+            sb.append("Глобальний: ").append(df.format(globalLimit)).append(" грн ").append(globalPercent).append("%\n");
         }
 
         double dailyLimit = timeLimitService.getLimit(TimeLimitService.LimitType.DAILY);
@@ -258,9 +256,9 @@ public class MainWindow extends JFrame {
 
             if (categoryPercent > 100) {
                 categoryPercent = 100;
-                sb.append("   - ").append(entry.getKey()).append(": ").append(df.format(catLimit)).append(" грн ").append(categoryPercent).append("% Перевищено\n");
+                sb.append(" - ").append(entry.getKey()).append(": ").append(df.format(catLimit)).append(" грн ").append(categoryPercent).append("% Перевищено\n");
             } else {
-                sb.append("   - ").append(entry.getKey()).append(": ").append(df.format(catLimit)).append(" грн ").append(categoryPercent).append("%\n");
+                sb.append(" - ").append(entry.getKey()).append(": ").append(df.format(catLimit)).append(" грн ").append(categoryPercent).append("%\n");
             }
         }
 
@@ -281,12 +279,12 @@ public class MainWindow extends JFrame {
     }
 
     private void initDefaultCategories() {
-        categoryService.addCategory(new Category("Зарплата", "income", "💰"));
-        categoryService.addCategory(new Category("Фріланс", "income", "🧑‍💻"));
-        categoryService.addCategory(new Category("Подарунок", "income", "🎁"));
-        categoryService.addCategory(new Category("Їжа", "expense", "🍔"));
-        categoryService.addCategory(new Category("Транспорт", "expense", "🚗"));
-        categoryService.addCategory(new Category("Розваги", "expense", "🎮"));
-        categoryService.addCategory(new Category("Медицина", "expense", "💊"));
+        categoryService.addCategory(new Category("Зарплата", "income", ""));
+        categoryService.addCategory(new Category("Фріланс", "income", ""));
+        categoryService.addCategory(new Category("Подарунок", "income", ""));
+        categoryService.addCategory(new Category("Їжа", "expense", ""));
+        categoryService.addCategory(new Category("Транспорт", "expense", ""));
+        categoryService.addCategory(new Category("Розваги", "expense", ""));
+        categoryService.addCategory(new Category("Медицина", "expense", ""));
     }
 }

@@ -8,14 +8,12 @@ import service.TransactionService;
 import service.BudgetService;
 import service.CategoryLimitService;
 import service.TimeLimitService;
-import service.TimeLimitService.LimitType;
 import service.ReportService;
 
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
 import java.time.LocalDate;
-import java.util.List;
 
 public class AddTransactionDialog extends JDialog {
     private final JTextField amountField = new JTextField();
@@ -28,11 +26,6 @@ public class AddTransactionDialog extends JDialog {
     private final TransactionService transactionService;
     private final CategoryService categoryService;
     private final CurrencyService currencyService;
-    private final BudgetService budgetService = new BudgetService();
-    private final CategoryLimitService categoryLimitService = new CategoryLimitService();
-    private final TimeLimitService timeLimitService = new TimeLimitService();
-    private final ReportService reportService = new ReportService();
-
     private Transaction existing;
 
     public AddTransactionDialog(JFrame parent,
@@ -62,10 +55,8 @@ public class AddTransactionDialog extends JDialog {
         setLocationRelativeTo(getParent());
         setLayout(new GridLayout(6, 2, 10, 10));
 
-        // Заповнюємо комбінований список для категорій на основі типу
         updateCategoryComboBox();
 
-        // Додаємо комбіновані списки
         add(new JLabel("Сума:")); add(amountField);
         add(new JLabel("Опис:")); add(descriptionField);
         add(new JLabel("Тип:")); add(typeBox);
@@ -73,16 +64,12 @@ public class AddTransactionDialog extends JDialog {
         add(new JLabel("Валюта:")); add(currencyBox);
         add(new JLabel()); add(saveBtn);
 
-        // Слухач кнопки "Зберегти"
         saveBtn.addActionListener(e -> saveTransaction());
 
-        // Додаємо фільтр для введення десяткових значень
         setDecimalInputFilter(amountField);
 
-        // Динамічно змінюємо варіанти категорій при зміні типу
         typeBox.addActionListener(e -> updateCategoryComboBox());
 
-        // Заповнюємо комбінований список валют
         updateCurrencyComboBox();
     }
 
@@ -111,32 +98,6 @@ public class AddTransactionDialog extends JDialog {
 
             double amountInUAH = amount * rate;
 
-            if (type.equals("expense")) {
-                List<Transaction> all = transactionService.getAllTransactions();
-
-                double totalCategory = reportService.getTotalByCategory(all, category);
-                double totalDay = reportService.getTotalForDate(all, date);
-                double totalWeek = reportService.getTotalForWeek(all, date);
-                double totalExpense = reportService.getTotalByType(all, "expense");
-
-                if (budgetService.isLimitExceeded(totalExpense + amountInUAH)) {
-                    showWarning("Перевищено глобальний ліміт місяця!");
-                    return;
-                }
-                if (categoryLimitService.isLimitExceeded(category, totalCategory + amountInUAH)) {
-                    showWarning("Перевищено ліміт по категорії: " + category);
-                    return;
-                }
-                if (timeLimitService.isLimitExceeded(LimitType.DAILY, totalDay + amountInUAH)) {
-                    showWarning("Перевищено денний ліміт!");
-                    return;
-                }
-                if (timeLimitService.isLimitExceeded(LimitType.WEEKLY, totalWeek + amountInUAH)) {
-                    showWarning("Перевищено тижневий ліміт!");
-                    return;
-                }
-            }
-
             Transaction t = new Transaction(amountInUAH, category, date, description, "UAH", type);
             if (existing != null) {
                 transactionService.removeTransaction(existing);
@@ -148,6 +109,7 @@ public class AddTransactionDialog extends JDialog {
         }
     }
 
+
     private void showWarning(String message) {
         JOptionPane.showMessageDialog(this, message, "Перевищення ліміту", JOptionPane.WARNING_MESSAGE);
     }
@@ -155,10 +117,8 @@ public class AddTransactionDialog extends JDialog {
     private void updateCategoryComboBox() {
         String selectedType = (String) typeBox.getSelectedItem();
 
-        // Очищаємо комбінований список
         categoryBox.removeAllItems();
 
-        // Додаємо категорії для доходів або витрат в залежності від типу
         if ("income".equals(selectedType)) {
             for (Category c : categoryService.getAllCategories()) {
                 if (c.getType().equals("income")) {
