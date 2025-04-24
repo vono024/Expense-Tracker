@@ -1,7 +1,6 @@
 package model;
 
 import java.time.LocalDate;
-import java.util.Objects;
 
 public class Transaction {
     private double amount;
@@ -10,6 +9,9 @@ public class Transaction {
     private String description;
     private String currency;
     private String type;
+
+    public Transaction() {
+    }
 
     public Transaction(double amount, String category, LocalDate date, String description, String currency, String type) {
         this.amount = amount;
@@ -24,41 +26,47 @@ public class Transaction {
         return amount;
     }
 
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+
     public String getCategory() {
         return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public LocalDate getDate() {
         return date;
     }
 
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
     public String getDescription() {
         return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getCurrency() {
         return currency;
     }
 
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
     public String getType() {
         return type;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Transaction)) return false;
-        Transaction that = (Transaction) o;
-        return Double.compare(that.amount, amount) == 0 &&
-                Objects.equals(category, that.category) &&
-                Objects.equals(date, that.date) &&
-                Objects.equals(description, that.description) &&
-                Objects.equals(currency, that.currency) &&
-                Objects.equals(type, that.type);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(amount, category, date, description, currency, type);
+    public void setType(String type) {
+        this.type = type;
     }
 }

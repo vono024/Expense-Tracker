@@ -122,14 +122,32 @@ public class MainWindow extends JFrame {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Зберегти файл");
 
-            chooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV", "csv"));
-            chooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("TXT", "txt"));
-            chooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("JSON", "json"));
+            var csvFilter = new javax.swing.filechooser.FileNameExtensionFilter("CSV", "csv");
+            var txtFilter = new javax.swing.filechooser.FileNameExtensionFilter("TXT", "txt");
+            var jsonFilter = new javax.swing.filechooser.FileNameExtensionFilter("JSON", "json");
+
+            chooser.addChoosableFileFilter(csvFilter);
+            chooser.addChoosableFileFilter(txtFilter);
+            chooser.addChoosableFileFilter(jsonFilter);
+            chooser.setFileFilter(jsonFilter); // за замовчуванням
 
             int result = chooser.showSaveDialog(this);
             if (result == JFileChooser.APPROVE_OPTION) {
                 String path = chooser.getSelectedFile().getAbsolutePath();
-                String extension = path.substring(path.lastIndexOf(".") + 1); // Отримуємо розширення файлу
+                String extension = "";
+                var selectedFilter = chooser.getFileFilter();
+
+                if (selectedFilter == csvFilter) {
+                    extension = "csv";
+                } else if (selectedFilter == txtFilter) {
+                    extension = "txt";
+                } else if (selectedFilter == jsonFilter) {
+                    extension = "json";
+                }
+
+                if (!path.toLowerCase().endsWith("." + extension)) {
+                    path += "." + extension;
+                }
 
                 try {
                     switch (extension) {
@@ -144,25 +162,53 @@ public class MainWindow extends JFrame {
                             break;
                         default:
                             JOptionPane.showMessageDialog(this, "Невідомий формат файлу.");
-                            break;
+                            return;
                     }
+                    JOptionPane.showMessageDialog(this, "Файл успішно збережено!");
                 } catch (IOException ex) {
                     JOptionPane.showMessageDialog(this, "Помилка при збереженні файлу.");
                 }
             }
         });
 
-
         loadBtn.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Завантажити JSON файл");
+            chooser.setDialogTitle("Завантажити файл");
+
+            chooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV", "csv"));
+            chooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("TXT", "txt"));
+            chooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("JSON", "json"));
+
             int result = chooser.showOpenDialog(this);
             if (result == JFileChooser.APPROVE_OPTION) {
+                String path = chooser.getSelectedFile().getAbsolutePath();
+                String extension = "";
+
+                if (path.lastIndexOf(".") != -1) {
+                    extension = path.substring(path.lastIndexOf(".") + 1);
+                }
+
                 try {
-                    List<Transaction> list = fileService.loadFromJson(chooser.getSelectedFile().getAbsolutePath());
+                    List<Transaction> list;
+                    switch (extension) {
+                        case "csv":
+                            list = fileService.loadFromCsv(path);
+                            break;
+                        case "txt":
+                            list = fileService.loadFromTxt(path);
+                            break;
+                        case "json":
+                            list = fileService.loadFromJson(path);
+                            break;
+                        default:
+                            JOptionPane.showMessageDialog(this, "Невідомий формат файлу.");
+                            return;
+                    }
+
                     transactionService.clearTransactions();
                     list.forEach(transactionService::addTransaction);
                     updateTable();
+
                 } catch (IOException ex) {
                     JOptionPane.showMessageDialog(this, "Помилка при завантаженні файлу.");
                 }
