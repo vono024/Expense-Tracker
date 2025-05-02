@@ -86,7 +86,7 @@ public class AddTransactionDialog extends JDialog {
             String currency = (String) currencyBox.getSelectedItem();
             LocalDate date = LocalDate.now();
 
-            double rate = currencyService.getRate(currency);
+            double rate = currencyService.getExchangeRate(currency, "UAH");
             if (rate <= 0) {
                 showWarning("Неможливо отримати курс для валюти: " + currency);
                 return;
@@ -104,7 +104,6 @@ public class AddTransactionDialog extends JDialog {
             showWarning("Некоректна сума");
         }
     }
-
 
     private void showWarning(String message) {
         JOptionPane.showMessageDialog(this, message, "Перевищення ліміту", JOptionPane.WARNING_MESSAGE);
@@ -132,7 +131,7 @@ public class AddTransactionDialog extends JDialog {
 
     private void updateCurrencyComboBox() {
         currencyBox.removeAllItems();
-        for (String code : currencyService.getAllRates().keySet()) {
+        for (String code : currencyService.getRates().keySet()) {
             currencyBox.addItem(code);
         }
     }

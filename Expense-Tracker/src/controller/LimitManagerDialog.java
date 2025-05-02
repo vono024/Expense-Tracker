@@ -1,6 +1,5 @@
 package controller;
 
-import app.MainWindow;
 import service.BudgetService;
 import service.CategoryLimitService;
 import service.TimeLimitService;
@@ -31,7 +30,7 @@ public class LimitManagerDialog extends JDialog {
         this.categoryLimitService = categoryLimitService;
         this.timeLimitService = timeLimitService;
 
-        setSize(600, 300); // Збільшити ширину вікна
+        setSize(600, 300);
         setLocationRelativeTo(parent);
         setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 

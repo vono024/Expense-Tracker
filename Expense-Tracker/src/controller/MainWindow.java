@@ -1,8 +1,5 @@
-package app;
+package controller;
 
-import controller.AddTransactionDialog;
-import controller.StatsDialog;
-import controller.LimitManagerDialog;
 import model.Transaction;
 import model.Category;
 import service.TransactionService;
@@ -334,14 +331,13 @@ public class MainWindow extends JFrame {
     }
 
     private void updateCurrency() {
-        Map<String, Double> rates = currencyService.getAllRates();
         StringBuilder sb = new StringBuilder();
 
-        double usd = rates.getOrDefault("USD", 1.0);
-        double eur = rates.getOrDefault("EUR", 1.0);
+        double eurToUah = currencyService.getExchangeRate("EUR", "UAH");
+        double usdToUah = currencyService.getExchangeRate("USD", "UAH");
 
-        sb.append("1 EUR → ").append(df.format(eur)).append(" UAH\n");
-        sb.append("1 USD → ").append(df.format(usd)).append(" UAH\n");
+        sb.append("1 EUR → ").append(df.format(eurToUah)).append(" UAH\n");
+        sb.append("1 USD → ").append(df.format(usdToUah)).append(" UAH\n");
 
         currencyArea.setText(sb.toString());
     }
@@ -350,6 +346,7 @@ public class MainWindow extends JFrame {
         categoryService.addCategory(new Category("Зарплата", "income", ""));
         categoryService.addCategory(new Category("Фріланс", "income", ""));
         categoryService.addCategory(new Category("Подарунок", "income", ""));
+        categoryService.addCategory(new Category("Премія", "income", ""));
         categoryService.addCategory(new Category("Їжа", "expense", ""));
         categoryService.addCategory(new Category("Транспорт", "expense", ""));
         categoryService.addCategory(new Category("Розваги", "expense", ""));

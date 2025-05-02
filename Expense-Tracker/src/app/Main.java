@@ -2,6 +2,7 @@ package app;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatLaf;
+import controller.MainWindow;
 
 import javax.swing.*;
 import java.awt.*;

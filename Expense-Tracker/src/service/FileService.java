@@ -53,7 +53,7 @@ public class FileService {
     public List<Transaction> loadFromCsv(String path) throws IOException {
         List<Transaction> list = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
-            String line = reader.readLine(); // Пропускаємо заголовок
+            String line = reader.readLine();
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",", -1);
                 if (parts.length == 6) {
