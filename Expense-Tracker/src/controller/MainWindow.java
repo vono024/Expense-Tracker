@@ -33,6 +33,7 @@ public class MainWindow extends JFrame {
     private final CategoryService categoryService = new CategoryService();
     private final TimeLimitService timeLimitService = new TimeLimitService();
     private final CategoryLimitService categoryLimitService = new CategoryLimitService();
+    private List<Transaction> displayedList;
 
     private final DecimalFormat df = new DecimalFormat("0.00");
 
@@ -50,12 +51,14 @@ public class MainWindow extends JFrame {
         JPanel topPanel = new JPanel();
         JButton addBtn = new JButton("Додати");
         JButton statsBtn = new JButton("Статистика");
+        JButton filterBtn = new JButton("Фільтр");
         JButton saveBtn = new JButton("Зберегти як");
         JButton loadBtn = new JButton("Завантажити");
         JButton limitSettingsBtn = new JButton("Налаштування лімітів");
 
         topPanel.add(addBtn);
         topPanel.add(statsBtn);
+        topPanel.add(filterBtn);
         topPanel.add(saveBtn);
         topPanel.add(loadBtn);
         topPanel.add(limitSettingsBtn);
@@ -64,6 +67,7 @@ public class MainWindow extends JFrame {
         JScrollPane scrollPane = new JScrollPane(table);
 
         JPanel bottomPanel = new JPanel(new GridLayout(1, 3));
+        bottomPanel.setPreferredSize(new Dimension(0, 215));
         JPanel summary = new JPanel(new FlowLayout(FlowLayout.LEFT));
         incomeLabel = new JLabel();
         expenseLabel = new JLabel();
@@ -108,6 +112,16 @@ public class MainWindow extends JFrame {
             AddTransactionDialog dialog = new AddTransactionDialog(this, transactionService, categoryService, currencyService);
             dialog.setVisible(true);
             updateTable();
+        });
+
+        filterBtn.addActionListener(e -> {
+            FilterDialog dialog = new FilterDialog(this, transactionService.getAllTransactions());
+            dialog.setVisible(true);
+            List<Transaction> filtered = dialog.getFilteredResults();
+            if (filtered != null) {
+                displayedList = filtered;
+                updateTable();
+            }
         });
 
         statsBtn.addActionListener(e -> {
@@ -248,10 +262,14 @@ public class MainWindow extends JFrame {
     }
 
     private void updateTable() {
-        List<Transaction> list = transactionService.getAllTransactions();
+        if (displayedList == null) {
+            displayedList = transactionService.getAllTransactions(); // ← ЗАХИСТ ДЛЯ ФІЛЬТРА
+        }
+
         String[] cols = {"Сума", "Категорія", "Дата", "Опис", "Тип"};
         DefaultTableModel model = new DefaultTableModel(cols, 0);
-        for (Transaction t : list) {
+
+        for (Transaction t : displayedList) {
             model.addRow(new Object[]{
                     df.format(t.getAmount()) + " грн",
                     t.getCategory(),
@@ -260,6 +278,7 @@ public class MainWindow extends JFrame {
                     t.getType()
             });
         }
+
         table.setModel(model);
         updateSummary();
         updateCurrency();
