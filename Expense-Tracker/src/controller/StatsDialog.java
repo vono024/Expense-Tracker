@@ -16,7 +16,6 @@ import java.util.Map;
 
 public class StatsDialog extends JDialog {
     private final JTextArea output;
-
     private final DecimalFormat df = new DecimalFormat("0.00");
 
     public StatsDialog(JFrame parent, TransactionService transactionService) {
@@ -33,9 +32,11 @@ public class StatsDialog extends JDialog {
 
         JScrollPane textScroll = new JScrollPane(output);
 
-        Map<String, Double> categorySums = new ReportService().getGroupedCategoryTotals(transactionService.getAllTransactions(), "expense");
+        Map<String, Double> categorySums = new ReportService().getGroupedCategoryTotals(
+                transactionService.getAllTransactions(), "expense");
+
         DefaultPieDataset dataset = new DefaultPieDataset();
-        categorySums.forEach((key, value) -> dataset.setValue(key, value));
+        categorySums.forEach(dataset::setValue);
 
         JFreeChart pieChart = ChartFactory.createPieChart(
                 "Витрати по категоріях",
@@ -82,7 +83,8 @@ public class StatsDialog extends JDialog {
         sb.append("\nТоп витрат:\n");
         for (Transaction t : topExpenses) {
             sb.append(" - ").append(t.getDate()).append(" — ")
-                    .append(df.format(t.getAmount())).append(" грн (").append(t.getCategory()).append(" — ").append(t.getDescription()).append(")\n");
+                    .append(df.format(t.getAmount())).append(" грн (")
+                    .append(t.getCategory()).append(" — ").append(t.getDescription()).append(")\n");
         }
 
         output.setText(sb.toString());

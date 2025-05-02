@@ -126,6 +126,7 @@ public class MainWindow extends JFrame {
 
         statsBtn.addActionListener(e -> {
             StatsDialog dialog = new StatsDialog(this, transactionService);
+            dialog.setModal(true);
             dialog.setVisible(true);
         });
 
@@ -140,7 +141,7 @@ public class MainWindow extends JFrame {
             chooser.addChoosableFileFilter(csvFilter);
             chooser.addChoosableFileFilter(txtFilter);
             chooser.addChoosableFileFilter(jsonFilter);
-            chooser.setFileFilter(jsonFilter); // за замовчуванням
+            chooser.setFileFilter(jsonFilter);
 
             int result = chooser.showSaveDialog(this);
             if (result == JFileChooser.APPROVE_OPTION) {
@@ -227,7 +228,13 @@ public class MainWindow extends JFrame {
         });
 
         limitSettingsBtn.addActionListener(e -> {
-            LimitManagerDialog dialog = new LimitManagerDialog(this, budgetService, categoryLimitService, timeLimitService);
+            LimitManagerDialog dialog = new LimitManagerDialog(
+                    this,
+                    budgetService,
+                    categoryLimitService,
+                    timeLimitService,
+                    categoryService
+            );
             dialog.setVisible(true);
         });
 
@@ -366,9 +373,23 @@ public class MainWindow extends JFrame {
         categoryService.addCategory(new Category("Фріланс", "income", ""));
         categoryService.addCategory(new Category("Подарунок", "income", ""));
         categoryService.addCategory(new Category("Премія", "income", ""));
+        categoryService.addCategory(new Category("Інвестиції", "income", ""));
+        categoryService.addCategory(new Category("Продаж", "income", ""));
+        categoryService.addCategory(new Category("Кешбек", "income", ""));
+        categoryService.addCategory(new Category("Бонус", "income", ""));
+        categoryService.addCategory(new Category("Повернення коштів", "income", ""));
+        categoryService.addCategory(new Category("Стипендія", "income", ""));
+
         categoryService.addCategory(new Category("Їжа", "expense", ""));
         categoryService.addCategory(new Category("Транспорт", "expense", ""));
         categoryService.addCategory(new Category("Розваги", "expense", ""));
         categoryService.addCategory(new Category("Медицина", "expense", ""));
+        categoryService.addCategory(new Category("Одяг", "expense", ""));
+        categoryService.addCategory(new Category("Побут", "expense", ""));
+        categoryService.addCategory(new Category("Комуналка", "expense", ""));
+        categoryService.addCategory(new Category("Інтернет", "expense", ""));
+        categoryService.addCategory(new Category("Освіта", "expense", ""));
+        categoryService.addCategory(new Category("Подарунки", "expense", ""));
     }
+
 }

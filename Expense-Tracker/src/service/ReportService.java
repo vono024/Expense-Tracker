@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 
 public class ReportService {
 
-    public double getTotalByType(List<Transaction> list, String type) {
-        return list.stream()
+    public double getTotalByType(List<Transaction> transactions, String type) {
+        return transactions.stream()
                 .filter(t -> t.getType().equals(type))
                 .mapToDouble(Transaction::getAmount)
                 .sum();

@@ -1,5 +1,7 @@
 package controller;
 
+import model.Category;
+import service.CategoryService;
 import service.BudgetService;
 import service.CategoryLimitService;
 import service.TimeLimitService;
@@ -20,15 +22,18 @@ public class LimitManagerDialog extends JDialog {
     private final BudgetService budgetService;
     private final CategoryLimitService categoryLimitService;
     private final TimeLimitService timeLimitService;
+    private final CategoryService categoryService;
 
     public LimitManagerDialog(JFrame parent,
                               BudgetService budgetService,
                               CategoryLimitService categoryLimitService,
-                              TimeLimitService timeLimitService) {
+                              TimeLimitService timeLimitService,
+                              CategoryService categoryService) {
         super(parent, "Налаштування лімітів", true);
         this.budgetService = budgetService;
         this.categoryLimitService = categoryLimitService;
         this.timeLimitService = timeLimitService;
+        this.categoryService = categoryService;
 
         setSize(600, 300);
         setLocationRelativeTo(parent);
@@ -112,8 +117,11 @@ public class LimitManagerDialog extends JDialog {
 
     private void updateCategoryCombo() {
         categoryCombo.removeAllItems();
-        String[] expenseCategories = {"Їжа", "Транспорт", "Розваги", "Медицина"};
-        for (String cat : expenseCategories) categoryCombo.addItem(cat);
+        for (Category category : categoryService.getAllCategories()) {
+            if (category.getType().equals("expense")) {
+                categoryCombo.addItem(category.getName());
+            }
+        }
     }
 
     private void setDecimalInputFilter(JTextField field) {
