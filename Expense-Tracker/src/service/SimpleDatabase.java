@@ -8,35 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleDatabase {
-    private static final String DB_URL = "jdbc:sqlite:transactions.db";
-
-    public SimpleDatabase() {
-        init();
-    }
-
-    private void init() {
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             Statement stmt = conn.createStatement()) {
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS transactions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    amount REAL,
-                    category TEXT,
-                    date TEXT,
-                    description TEXT,
-                    currency TEXT,
-                    type TEXT
-                )
-            """);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+    private final Connection conn = DatabaseConnection.getInstance().getConnection();
 
     public void save(Transaction t) {
         String sql = "INSERT INTO transactions (amount, category, date, description, currency, type) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setDouble(1, t.getAmount());
             ps.setString(2, t.getCategory());
             ps.setString(3, t.getDate().toString());
@@ -52,8 +28,7 @@ public class SimpleDatabase {
     public List<Transaction> loadAll() {
         List<Transaction> list = new ArrayList<>();
         String sql = "SELECT * FROM transactions";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             Statement stmt = conn.createStatement();
+        try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 Transaction t = new Transaction(
@@ -73,9 +48,26 @@ public class SimpleDatabase {
     }
 
     public void clearAll() {
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             Statement stmt = conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.execute("DELETE FROM transactions");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void init() {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS transactions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    amount REAL,
+                    category TEXT,
+                    date TEXT,
+                    description TEXT,
+                    currency TEXT,
+                    type TEXT
+                )
+            """);
         } catch (SQLException e) {
             e.printStackTrace();
         }
