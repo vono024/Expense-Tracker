@@ -9,6 +9,7 @@ public class TransactionService {
     private final SimpleDatabase db = new SimpleDatabase();
 
     public TransactionService() {
+        db.init();
         transactions = db.loadAll();
     }
 

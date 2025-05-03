@@ -58,18 +58,19 @@ public class SimpleDatabase {
     public void init() {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("""
-                CREATE TABLE IF NOT EXISTS transactions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    amount REAL,
-                    category TEXT,
-                    date TEXT,
-                    description TEXT,
-                    currency TEXT,
-                    type TEXT
-                )
-            """);
+            CREATE TABLE IF NOT EXISTS transactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                amount REAL,
+                category TEXT,
+                date TEXT,
+                description TEXT,
+                currency TEXT,
+                type TEXT
+            )
+        """);
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 }
