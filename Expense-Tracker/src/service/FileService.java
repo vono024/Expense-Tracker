@@ -36,14 +36,18 @@ public class FileService {
     }
 
     public void saveAsCsv(List<Transaction> transactions, String path) throws IOException {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(path))) {
+        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(
+                new FileOutputStream(path), "UTF-8"))) {
+
+            writer.write('\uFEFF');
             writer.println("amount,category,date,description,currency,type");
+
             for (Transaction t : transactions) {
-                writer.printf("%s,%s,%s,%s,%s,%s%n",
+                writer.printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"%n",
                         t.getAmount(),
-                        escape(t.getCategory()),
+                        escapeCsv(t.getCategory()),
                         t.getDate(),
-                        escape(t.getDescription()),
+                        escapeCsv(t.getDescription()),
                         t.getCurrency(),
                         t.getType());
             }
@@ -58,12 +62,12 @@ public class FileService {
                 String[] parts = line.split(",", -1);
                 if (parts.length == 6) {
                     Transaction t = new Transaction();
-                    t.setAmount(Double.parseDouble(parts[0]));
-                    t.setCategory(parts[1]);
-                    t.setDate(LocalDate.parse(parts[2]));
-                    t.setDescription(parts[3]);
-                    t.setCurrency(parts[4]);
-                    t.setType(parts[5]);
+                    t.setAmount(Double.parseDouble(parts[0].replace("\"", "")));
+                    t.setCategory(parts[1].replace("\"", ""));
+                    t.setDate(LocalDate.parse(parts[2].replace("\"", "")));
+                    t.setDescription(parts[3].replace("\"", ""));
+                    t.setCurrency(parts[4].replace("\"", ""));
+                    t.setType(parts[5].replace("\"", ""));
                     list.add(t);
                 }
             }
@@ -120,8 +124,9 @@ public class FileService {
         return list;
     }
 
-    private String escape(String text) {
-        return text == null ? "" : text.replace(",", " ");
+    private String escapeCsv(String text) {
+        if (text == null) return "";
+        return text.replace("\"", "\"\"");
     }
 
     private static class LocalDateAdapter extends com.google.gson.TypeAdapter<LocalDate> {
