@@ -5,10 +5,12 @@ import java.sql.*;
 
 public class BudgetService {
     private double monthlyLimit = 0.0;
-    private static final String FILE_PATH = "resources/limits-budget.txt";
-    private static final String DB_URL = "jdbc:sqlite:expense_tracker.db";
+    private static final String BASE_PATH = System.getProperty("user.home") + "/AppData/Roaming/ExpenseTracker";
+    private static final String FILE_PATH = BASE_PATH + "/limits-budget.txt";
+    private static final String DB_URL = "jdbc:sqlite:" + BASE_PATH + "/expense_tracker.db";
 
     public BudgetService() {
+        new File(BASE_PATH).mkdirs();
         createTableIfNotExists();
         load();
     }

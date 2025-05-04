@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Expense-Tracker:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Expense_Tracker_jar</output-path>
+    <root id="archive" name="Expense-Tracker.jar">
+      <element id="module-output" name="Expense-Tracker" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/Expense-Tracker/lib/jcommon-1.0.24.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/Expense-Tracker/lib/sqlite-jdbc-3.36.0.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/Expense-Tracker/lib/gson-2.10.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/Expense-Tracker/lib/jfreechart-1.5.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/Expense-Tracker/lib/flatlaf-3.6.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

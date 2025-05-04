@@ -2,13 +2,31 @@ package service;
 
 import model.Transaction;
 
+import java.io.File;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleDatabase {
-    private final Connection conn = DatabaseConnection.getInstance().getConnection();
+    private static final String BASE_PATH = System.getProperty("user.home") + "/AppData/Roaming/ExpenseTracker";
+    private static final String DB_URL = "jdbc:sqlite:" + BASE_PATH + "/expense_tracker.db";
+
+    private final Connection conn;
+
+    public SimpleDatabase() {
+        new File(BASE_PATH).mkdirs();
+        conn = connect();
+        init();
+    }
+
+    private Connection connect() {
+        try {
+            return DriverManager.getConnection(DB_URL);
+        } catch (SQLException e) {
+            throw new RuntimeException("Не вдалося підключитись до БД: " + e.getMessage());
+        }
+    }
 
     public void save(Transaction t) {
         String sql = "INSERT INTO transactions (amount, category, date, description, currency, type) VALUES (?, ?, ?, ?, ?, ?)";
@@ -58,19 +76,18 @@ public class SimpleDatabase {
     public void init() {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("""
-            CREATE TABLE IF NOT EXISTS transactions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                amount REAL,
-                category TEXT,
-                date TEXT,
-                description TEXT,
-                currency TEXT,
-                type TEXT
-            )
-        """);
+                CREATE TABLE IF NOT EXISTS transactions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    amount REAL,
+                    category TEXT,
+                    date TEXT,
+                    description TEXT,
+                    currency TEXT,
+                    type TEXT
+                )
+            """);
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
-
 }

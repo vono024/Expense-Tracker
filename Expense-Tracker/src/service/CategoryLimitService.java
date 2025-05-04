@@ -1,5 +1,6 @@
 package service;
 
+import java.io.File;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,9 +8,11 @@ import java.util.Map;
 public class CategoryLimitService {
 
     private Map<String, Double> categoryLimits = new HashMap<>();
-    private static final String DB_URL = "jdbc:sqlite:expense_tracker.db";
+    private static final String BASE_PATH = System.getProperty("user.home") + "/AppData/Roaming/ExpenseTracker";
+    private static final String DB_URL = "jdbc:sqlite:" + BASE_PATH + "/expense_tracker.db";
 
     public CategoryLimitService() {
+        new File(BASE_PATH).mkdirs();
         createTableIfNotExists();
         loadFromDatabase();
     }
