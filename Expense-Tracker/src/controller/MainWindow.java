@@ -10,6 +10,7 @@ import service.BudgetService;
 import service.CategoryService;
 import service.TimeLimitService;
 import service.CategoryLimitService;
+import java.util.ArrayList;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -100,13 +101,6 @@ public class MainWindow extends JFrame {
         add(topPanel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
-
-        JPopupMenu popup = new JPopupMenu();
-        JMenuItem edit = new JMenuItem("Редагувати");
-        JMenuItem delete = new JMenuItem("Видалити");
-        popup.add(edit);
-        popup.add(delete);
-        table.setComponentPopupMenu(popup);
 
         addBtn.addActionListener(e -> {
             AddTransactionDialog dialog = new AddTransactionDialog(this, transactionService, categoryService, currencyService);
@@ -238,27 +232,42 @@ public class MainWindow extends JFrame {
             dialog.setVisible(true);
         });
 
+        JPopupMenu popup = new JPopupMenu();
+
+        JMenuItem edit = new JMenuItem("Редагувати");
         edit.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row != -1) {
-                Transaction t = transactionService.getAllTransactions().get(row);
+                Transaction t = displayedList.get(row);
                 AddTransactionDialog dialog = new AddTransactionDialog(this, transactionService, t, categoryService, currencyService);
                 dialog.setVisible(true);
                 updateTable();
             }
         });
 
+        JMenuItem delete = new JMenuItem("Видалити");
         delete.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row != -1) {
-                Transaction t = transactionService.getAllTransactions().get(row);
-                int confirm = JOptionPane.showConfirmDialog(this, "Видалити транзакцію?", "Підтвердження", JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    transactionService.removeTransaction(t);
-                    updateTable();
-                }
+            int[] selectedRows = table.getSelectedRows();
+            if (selectedRows.length == 0) return;
+
+            int confirm = JOptionPane.showConfirmDialog(this, "Видалити вибрані транзакції?", "Підтвердження", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+
+            List<Transaction> toRemove = new ArrayList<>();
+            for (int row : selectedRows) {
+                toRemove.add(displayedList.get(row));
             }
+
+            for (Transaction t : toRemove) {
+                transactionService.removeTransaction(t);
+            }
+
+            updateTable();
         });
+
+        popup.add(edit);
+        popup.add(delete);
+        table.setComponentPopupMenu(popup);
 
         updateTable();
 
